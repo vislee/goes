@@ -69,11 +69,13 @@ func (c *Connection) RefreshIndex(name string) (Response, error) {
 }
 
 // Stats fetches statistics (_stats) for the current elasticsearch server
-func (c *Connection) Stats() (Response, error) {
+func (c *Connection) Stats(indexList []string, extraArgs url.Values) (Response, error) {
 	r := Request{
-		Conn:   c,
-		method: "GET",
-		api:    "_stats",
+		Conn:      c,
+		IndexList: indexList,
+		ExtraArgs: extraArgs,
+		method:    "GET",
+		api:       "_stats",
 	}
 
 	return r.Run()

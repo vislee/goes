@@ -292,15 +292,16 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 func (s *GoesTestSuite) TestStats(c *C) {
 	conn := NewConnection(ES_HOST, ES_PORT)
-	indexName := "testfetchstats"
+	indexName := "teststats"
 
+	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
 
 	// we must wait for a bit otherwise ES crashes
 	time.Sleep(1 * time.Second)
 
-	response, err := conn.Stats()
+	response, err := conn.Stats([]string{indexName}, url.Values{})
 	c.Assert(err, IsNil)
 
 	c.Assert(response.All.Indices[indexName].Primaries["docs"].Count, Equals, 0)
