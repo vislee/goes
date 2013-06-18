@@ -290,7 +290,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *GoesTestSuite) TestFetchStats(c *C) {
+func (s *GoesTestSuite) TestStats(c *C) {
 	conn := NewConnection(ES_HOST, ES_PORT)
 	indexName := "testfetchstats"
 
@@ -300,7 +300,7 @@ func (s *GoesTestSuite) TestFetchStats(c *C) {
 	// we must wait for a bit otherwise ES crashes
 	time.Sleep(1 * time.Second)
 
-	response, err := conn.FetchStats()
+	response, err := conn.Stats()
 	c.Assert(err, IsNil)
 
 	c.Assert(response.All.Indices[indexName].Primaries["docs"].Count, Equals, 0)

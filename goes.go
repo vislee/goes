@@ -68,7 +68,8 @@ func (c *Connection) RefreshIndex(name string) (Response, error) {
 	return r.Run()
 }
 
-func (c *Connection) FetchStats() (Response, error) {
+// Stats fetches statistics (_stats) for the current elasticsearch server
+func (c *Connection) Stats() (Response, error) {
 	r := Request{
 		Conn:   c,
 		method: "GET",
