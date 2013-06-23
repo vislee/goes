@@ -552,3 +552,74 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 
 	c.Assert(response.Hits, DeepEquals, expectedHits)
 }
+
+func (s *GoesTestSuite) TestIndexStatus(c *C) {
+	indexName := "testindexstatus"
+	conn := NewConnection(ES_HOST, ES_PORT)
+	conn.DeleteIndex(indexName)
+
+	mapping := map[string]interface{}{
+		"settings": map[string]interface{}{
+			"index.number_of_shards":   1,
+			"index.number_of_replicas": 1,
+		},
+	}
+
+	_, err := conn.CreateIndex(indexName, mapping)
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	// gives ES some time to do its job
+	time.Sleep(1 * time.Second)
+
+	response, err := conn.IndexStatus([]string{"_all"})
+	c.Assert(err, IsNil)
+
+	c.Assert(response.Ok, Equals, true)
+
+	expectedShards := Shard{Total: 2, Successful: 1, Failed: 0}
+	c.Assert(response.Shards, Equals, expectedShards)
+
+	expectedIndices := map[string]IndexStatus{
+		indexName: IndexStatus{
+			Index: map[string]interface{}{
+				"primary_size":          "99b",
+				"primary_size_in_bytes": float64(99),
+				"size":                  "99b",
+				"size_in_bytes":         float64(99),
+			},
+			Translog: map[string]uint64{
+				"operations": 0,
+			},
+			Docs: map[string]uint64{
+				"num_docs":     0,
+				"max_doc":      0,
+				"deleted_docs": 0,
+			},
+			Merges: map[string]interface{}{
+				"current":               float64(0),
+				"current_docs":          float64(0),
+				"current_size":          "0b",
+				"current_size_in_bytes": float64(0),
+				"total":                 float64(0),
+				"total_time":            "0s",
+				"total_time_in_millis":  float64(0),
+				"total_docs":            float64(0),
+				"total_size":            "0b",
+				"total_size_in_bytes":   float64(0),
+			},
+			Refresh: map[string]interface{}{
+				"total":                float64(1),
+				"total_time":           "0s",
+				"total_time_in_millis": float64(0),
+			},
+			Flush: map[string]interface{}{
+				"total":                float64(0),
+				"total_time":           "0s",
+				"total_time_in_millis": float64(0),
+			},
+		},
+	}
+
+	c.Assert(response.Indices, DeepEquals, expectedIndices)
+}

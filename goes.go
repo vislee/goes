@@ -81,6 +81,19 @@ func (c *Connection) Stats(indexList []string, extraArgs url.Values) (Response, 
 	return r.Run()
 }
 
+// IndexStatus fetches the status (_status) for the indices defined in
+// indexList. Use _all in indexList to get stats for all indices
+func (c *Connection) IndexStatus(indexList []string) (Response, error) {
+	r := Request{
+		Conn:      c,
+		IndexList: indexList,
+		method:    "GET",
+		api:       "_status",
+	}
+
+	return r.Run()
+}
+
 // Bulk adds multiple documents in bulk mode to the index for a given type
 func (c *Connection) BulkSend(index string, documents []Document) (Response, error) {
 	// We do not generate a traditionnal JSON here (often a one liner)

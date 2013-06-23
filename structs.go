@@ -73,6 +73,9 @@ type Response struct {
 	Exists bool
 	Source map[string]interface{} `json:"_source"`
 	Fields map[string]interface{} `json:"fields"`
+
+	// Used by the _status API
+	Indices map[string]IndexStatus
 }
 
 // Represents a document to send to elasticsearch
@@ -139,4 +142,20 @@ type Hits struct {
 type SearchError struct {
 	Msg        string
 	StatusCode uint64
+}
+
+// Represent the status for a given index for the _status command
+type IndexStatus struct {
+	// XXX : problem, int will be marshaled to a float64 which seems logical
+	// XXX : is it better to use strings even for int values or to keep
+	// XXX : interfaces and deal with float64 ?
+	Index map[string]interface{}
+
+	Translog map[string]uint64
+	Docs     map[string]uint64
+	Merges   map[string]interface{}
+	Refresh  map[string]interface{}
+	Flush    map[string]interface{}
+
+	// TODO: add shards support later, we do not need it for the moment
 }
