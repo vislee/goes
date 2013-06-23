@@ -507,7 +507,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
-	//defer conn.DeleteIndex(indexName)
+	defer conn.DeleteIndex(indexName)
 
 	d := Document{
 		Index:  indexName,
