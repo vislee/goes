@@ -47,7 +47,7 @@ type Request struct {
 	id string
 }
 
-// Represents a search Response from elasticsearch
+// Represents a Response from elasticsearch
 type Response struct {
 	Ok           bool
 	Acknowledged bool
