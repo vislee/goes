@@ -112,46 +112,52 @@ func (c *Connection) BulkSend(index string, documents []Document) (Response, err
 	//
 	// I know it is unreadable I must find an elegant way to fix this.
 
-	bulkData := []byte{}
+	// len(documents) * 2 : action + optional_sources
+	// + 1 : room for the trailing \n
+	bulkData := make([][]byte, len(documents)*2+1)
+	i := 0
+
 	for _, doc := range documents {
-		header := map[string]interface{}{
+		action, err := json.Marshal(map[string]interface{}{
 			doc.BulkCommand: map[string]interface{}{
 				"_index": doc.Index,
 				"_type":  doc.Type,
 				"_id":    doc.Id,
 			},
-		}
+		})
 
-		temp, err := json.Marshal(header)
 		if err != nil {
 			return Response{}, err
 		}
 
-		temp = append(temp, '\n')
-		bulkData = append(bulkData, temp[:]...)
+		bulkData[i] = action
+		i++
 
 		if len(doc.Fields) > 0 {
-			fields := map[string]interface{}{}
+			fields := make(map[string]interface{}, len(doc.Fields))
 			for fieldName, fieldValue := range doc.Fields {
 				fields[fieldName] = fieldValue
 			}
 
-			temp, err = json.Marshal(fields)
+			sources, err := json.Marshal(fields)
 			if err != nil {
 				return Response{}, err
 			}
 
-			temp = append(temp, '\n')
-			bulkData = append(bulkData, temp[:]...)
+			bulkData[i] = sources
+			i++
 		}
 	}
+
+	// forces an extra trailing \n absolutely necessary for elasticsearch
+	bulkData[len(bulkData)-1] = []byte(nil)
 
 	r := Request{
 		Conn:      c,
 		IndexList: []string{index},
 		method:    "POST",
 		api:       "_bulk",
-		bulkData:  bulkData,
+		bulkData:  bytes.Join(bulkData, []byte("\n")),
 	}
 
 	return r.Run()
