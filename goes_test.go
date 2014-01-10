@@ -623,3 +623,103 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 
 	c.Assert(response.Indices, DeepEquals, expectedIndices)
 }
+
+func (s *GoesTestSuite) TestScroll(c *C) {
+	indexName := "testscroll"
+	docType := "tweet"
+
+	tweets := []Document{
+		Document{
+			Id:          nil,
+			Index:       indexName,
+			Type:        docType,
+			BulkCommand: BULK_COMMAND_INDEX,
+			Fields: map[string]interface{}{
+				"user":    "foo",
+				"message": "some foo message",
+			},
+		},
+
+		Document{
+			Id:          nil,
+			Index:       indexName,
+			Type:        docType,
+			BulkCommand: BULK_COMMAND_INDEX,
+			Fields: map[string]interface{}{
+				"user":    "bar",
+				"message": "some bar message",
+			},
+		},
+
+		Document{
+			Id:          nil,
+			Index:       indexName,
+			Type:        docType,
+			BulkCommand: BULK_COMMAND_INDEX,
+			Fields: map[string]interface{}{
+				"user":    "foo",
+				"message": "another foo message",
+			},
+		},
+	}
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+
+	mapping := map[string]interface{}{
+		"settings": map[string]interface{}{
+			"index.number_of_shards":   1,
+			"index.number_of_replicas": 0,
+		},
+	}
+
+	defer conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, mapping)
+	c.Assert(err, IsNil)
+
+	_, err = conn.BulkSend(indexName, tweets)
+	c.Assert(err, IsNil)
+
+	_, err = conn.RefreshIndex(indexName)
+	c.Assert(err, IsNil)
+
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"filtered": map[string]interface{}{
+				"filter": map[string]interface{}{
+					"term": map[string]interface{}{
+						"user": "foo",
+					},
+				},
+			},
+		},
+	}
+
+	scan, err := conn.Scan(query, []string{indexName}, []string{docType}, "1m", 1)
+	c.Assert(err, IsNil)
+	c.Assert(len(scan.ScrollId) > 0, Equals, true)
+
+	searchResults, err := conn.Scroll(scan.ScrollId, "1m")
+	c.Assert(err, IsNil)
+
+	// some data in first chunk
+	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
+	c.Assert(len(searchResults.ScrollId) > 0, Equals, true)
+	c.Assert(len(searchResults.Hits.Hits), Equals, 1)
+
+	searchResults, err = conn.Scroll(searchResults.ScrollId, "1m")
+	c.Assert(err, IsNil)
+
+	// more data in second chunk
+	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
+	c.Assert(len(searchResults.ScrollId) > 0, Equals, true)
+	c.Assert(len(searchResults.Hits.Hits), Equals, 1)
+
+	searchResults, err = conn.Scroll(searchResults.ScrollId, "1m")
+	c.Assert(err, IsNil)
+
+	// nothing in third chunk
+	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
+	c.Assert(len(searchResults.ScrollId) > 0, Equals, true)
+	c.Assert(len(searchResults.Hits.Hits), Equals, 0)
+}

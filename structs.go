@@ -40,6 +40,9 @@ type Request struct {
 	// Bulk data
 	bulkData []byte
 
+	// Request body
+	Body []byte
+
 	// A list of extra URL arguments
 	ExtraArgs url.Values
 
@@ -76,6 +79,9 @@ type Response struct {
 
 	// Used by the _status API
 	Indices map[string]IndexStatus
+
+	// Scroll id for iteration
+	ScrollId string `json:"_scroll_id"`
 }
 
 // Represents a document to send to elasticsearch
