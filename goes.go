@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -177,6 +178,42 @@ func (c *Connection) Search(query map[string]interface{}, indexList []string, ty
 	return r.Run()
 }
 
+// Scan starts scroll over an index
+func (c *Connection) Scan(query map[string]interface{}, indexList []string, typeList []string, timeout string, size int) (Response, error) {
+	v := url.Values{}
+	v.Add("search_type", "scan")
+	v.Add("scroll", timeout)
+	v.Add("size", strconv.Itoa(size))
+
+	r := Request{
+		Conn:      c,
+		Query:     query,
+		IndexList: indexList,
+		TypeList:  typeList,
+		method:    "POST",
+		api:       "_search",
+		ExtraArgs: v,
+	}
+
+	return r.Run()
+}
+
+// Scroll fetches data by scroll id
+func (c *Connection) Scroll(scrollId string, timeout string) (Response, error) {
+	v := url.Values{}
+	v.Add("scroll", timeout)
+
+	r := Request{
+		Conn:      c,
+		method:    "POST",
+		api:       "_search/scroll",
+		ExtraArgs: v,
+		Body:      []byte(scrollId),
+	}
+
+	return r.Run()
+}
+
 // Get a typed document by its id
 func (c *Connection) Get(index string, documentType string, id string, extraArgs url.Values) (Response, error) {
 	r := Request{
@@ -233,7 +270,9 @@ func (req *Request) Run() (Response, error) {
 	postData := []byte{}
 
 	// XXX : refactor this
-	if req.api == "_bulk" {
+	if len(req.Body) > 0 {
+		postData = req.Body
+	} else if req.api == "_bulk" {
 		postData = req.bulkData
 	} else {
 		b, err := json.Marshal(req.Query)
