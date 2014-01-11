@@ -6,7 +6,7 @@ package goes_test
 
 import (
 	"fmt"
-	"goes"
+	"github.com/belogik/goes"
 	"net/url"
 )
 
@@ -128,7 +128,7 @@ func ExampleConnection_Delete() {
 	d := goes.Document{
 		Index: "twitter",
 		Type:  "tweet",
-		Id: "1",
+		Id:    "1",
 		Fields: map[string]interface{}{
 			"user": "foo",
 		},
