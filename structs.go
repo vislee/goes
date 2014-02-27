@@ -82,7 +82,13 @@ type Response struct {
 
 	// Scroll id for iteration
 	ScrollId string `json:"_scroll_id"`
+
+	Aggregations map[string]Aggregation `json:"aggregations,omitempty"`
 }
+
+type Aggregation map[string]interface{}
+
+type Bucket map[string]interface{}
 
 // Represents a document to send to elasticsearch
 type Document struct {
