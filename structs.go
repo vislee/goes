@@ -52,7 +52,6 @@ type Request struct {
 
 // Represents a Response from elasticsearch
 type Response struct {
-	Ok           bool
 	Acknowledged bool
 	Error        string
 	Status       uint64
@@ -73,7 +72,6 @@ type Response struct {
 	Items []map[string]Item `json:"items,omitempty"`
 
 	// Used by the GET API
-	Exists bool
 	Source map[string]interface{} `json:"_source"`
 	Fields map[string]interface{} `json:"fields"`
 
@@ -102,7 +100,6 @@ type Document struct {
 
 // Represents the "items" field in a _bulk response
 type Item struct {
-	Ok      bool   `json:"ok"`
 	Type    string `json:"_type"`
 	Id      string `json:"_id"`
 	Index   string `json:"_index"`
