@@ -130,7 +130,6 @@ func (s *GoesTestSuite) TestCreateIndex(c *C) {
 	resp, err := conn.CreateIndex(indexName, mapping)
 
 	c.Assert(err, IsNil)
-	c.Assert(resp.Ok, Equals, true)
 	c.Assert(resp.Acknowledged, Equals, true)
 }
 
@@ -155,7 +154,6 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := Response{}
-	expectedResponse.Ok = true
 	expectedResponse.Acknowledged = true
 	c.Assert(resp, DeepEquals, expectedResponse)
 }
@@ -167,9 +165,8 @@ func (s *GoesTestSuite) TestRefreshIndex(c *C) {
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
 
-	resp, err := conn.RefreshIndex(indexName)
+	_, err = conn.RefreshIndex(indexName)
 	c.Assert(err, IsNil)
-	c.Assert(resp.Ok, Equals, true)
 
 	_, err = conn.DeleteIndex(indexName)
 	c.Assert(err, IsNil)
@@ -210,7 +207,6 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 	response, err := conn.BulkSend(indexName, tweets)
 	i := Item{
-		Ok:      true,
 		Id:      "123",
 		Type:    docType,
 		Version: 1,
@@ -267,7 +263,6 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 	response, err = conn.BulkSend(indexName, docToDelete)
 	i = Item{
-		Ok:      true,
 		Id:      "123",
 		Type:    docType,
 		Version: 2,
@@ -339,7 +334,6 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := Response{
-		Ok:      true,
 		Index:   indexName,
 		Id:      docId,
 		Type:    docType,
@@ -373,7 +367,6 @@ func (s *GoesTestSuite) TestIndexIdNotDefined(c *C) {
 	response, err := conn.Index(d, url.Values{})
 	c.Assert(err, IsNil)
 
-	c.Assert(response.Ok, Equals, true)
 	c.Assert(response.Index, Equals, indexName)
 	c.Assert(response.Type, Equals, docType)
 	c.Assert(response.Version, Equals, 1)
@@ -409,7 +402,6 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := Response{
-		Ok:    true,
 		Found: true,
 		Index: indexName,
 		Type:  docType,
@@ -423,7 +415,6 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse = Response{
-		Ok:    true,
 		Found: false,
 		Index: indexName,
 		Type:  docType,
@@ -468,7 +459,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 		Type:    docType,
 		Id:      docId,
 		Version: 1,
-		Exists:  true,
+		Found: true,
 		Source:  source,
 	}
 
@@ -484,9 +475,9 @@ func (s *GoesTestSuite) TestGet(c *C) {
 		Type:    docType,
 		Id:      docId,
 		Version: 1,
-		Exists:  true,
+		Found:  true,
 		Fields: map[string]interface{}{
-			"f1": "foo",
+			"f1": []interface{}{"foo"},
 		},
 	}
 
@@ -575,17 +566,13 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	response, err := conn.IndexStatus([]string{"_all"})
 	c.Assert(err, IsNil)
 
-	c.Assert(response.Ok, Equals, true)
-
 	expectedShards := Shard{Total: 2, Successful: 1, Failed: 0}
 	c.Assert(response.Shards, Equals, expectedShards)
 
 	expectedIndices := map[string]IndexStatus{
 		indexName: IndexStatus{
 			Index: map[string]interface{}{
-				"primary_size":          "99b",
 				"primary_size_in_bytes": float64(99),
-				"size":                  "99b",
 				"size_in_bytes":         float64(99),
 			},
 			Translog: map[string]uint64{
@@ -599,23 +586,18 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 			Merges: map[string]interface{}{
 				"current":               float64(0),
 				"current_docs":          float64(0),
-				"current_size":          "0b",
 				"current_size_in_bytes": float64(0),
 				"total":                 float64(0),
-				"total_time":            "0s",
 				"total_time_in_millis":  float64(0),
 				"total_docs":            float64(0),
-				"total_size":            "0b",
 				"total_size_in_bytes":   float64(0),
 			},
 			Refresh: map[string]interface{}{
 				"total":                float64(1),
-				"total_time":           "0s",
 				"total_time_in_millis": float64(0),
 			},
 			Flush: map[string]interface{}{
 				"total":                float64(0),
-				"total_time":           "0s",
 				"total_time_in_millis": float64(0),
 			},
 		},
