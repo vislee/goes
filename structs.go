@@ -84,8 +84,10 @@ type Response struct {
 	Aggregations map[string]Aggregation `json:"aggregations,omitempty"`
 }
 
+// Represents an aggregation from response
 type Aggregation map[string]interface{}
 
+// Represents a bucket for aggregation
 type Bucket map[string]interface{}
 
 // Represents a document to send to elasticsearch
