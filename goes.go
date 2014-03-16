@@ -348,3 +348,34 @@ func (r *Request) Url() string {
 
 	return u.String()
 }
+
+// Buckets returns list of buckets in aggregation
+func (a Aggregation) Buckets() []Bucket {
+	result := []Bucket{}
+	if buckets, ok := a["buckets"]; ok {
+		for _, bucket := range buckets.([]interface {}) {
+			result = append(result, bucket.(map[string]interface{}))
+		}
+	}
+
+	return result
+}
+
+// Key returns key for aggregation bucket
+func (b Bucket) Key() interface{} {
+	return b["key"]
+}
+
+// DocCount returns count of documents in this bucket
+func (b Bucket) DocCount() uint64 {
+	return uint64(b["doc_count"].(float64))
+}
+
+// Aggregation returns aggregation by name from bucket
+func (b Bucket) Aggregation(name string) Aggregation{
+	if agg, ok := b[name]; ok {
+		return agg.(map[string]interface{})
+	} else {
+		return Aggregation{}
+	}
+}

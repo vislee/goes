@@ -705,3 +705,114 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	c.Assert(len(searchResults.ScrollId) > 0, Equals, true)
 	c.Assert(len(searchResults.Hits.Hits), Equals, 0)
 }
+
+
+func (s *GoesTestSuite) TestAggregations(c *C) {
+	indexName := "testaggs"
+	docType := "tweet"
+
+	tweets := []Document{
+		Document{
+			Id:          nil,
+			Index:       indexName,
+			Type:        docType,
+			BulkCommand: BULK_COMMAND_INDEX,
+			Fields: map[string]interface{}{
+				"user"    : "foo",
+				"message" : "some foo message",
+				"age"     : 25,
+			},
+		},
+
+		Document{
+			Id:          nil,
+			Index:       indexName,
+			Type:        docType,
+			BulkCommand: BULK_COMMAND_INDEX,
+			Fields: map[string]interface{}{
+				"user"    : "bar",
+				"message" : "some bar message",
+				"age"     : 30,
+			},
+		},
+
+		Document{
+			Id:          nil,
+			Index:       indexName,
+			Type:        docType,
+			BulkCommand: BULK_COMMAND_INDEX,
+			Fields: map[string]interface{}{
+				"user"    :    "foo",
+				"message" : "another foo message",
+			},
+		},
+	}
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+
+	mapping := map[string]interface{}{
+		"settings": map[string]interface{}{
+			"index.number_of_shards":   1,
+			"index.number_of_replicas": 0,
+		},
+	}
+
+	defer conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, mapping)
+	c.Assert(err, IsNil)
+
+	_, err = conn.BulkSend(indexName, tweets)
+	c.Assert(err, IsNil)
+
+	_, err = conn.RefreshIndex(indexName)
+	c.Assert(err, IsNil)
+
+	query := map[string]interface{}{
+		"aggs": map[string]interface{}{
+			"user": map[string]interface{}{
+				"terms": map[string]interface{}{
+					"field": "user",
+					"order": map[string]interface{}{
+						"_term": "asc",
+					},
+				},
+				"aggs": map[string]interface{}{
+					"age": map[string]interface{}{
+						"stats": map[string]interface{}{
+							"field": "age",
+						},
+					},
+				},
+			},
+			"age": map[string]interface{}{
+				"stats": map[string]interface{}{
+					"field": "age",
+				},
+			},
+		},
+	}
+
+	resp, err := conn.Search(query, []string{indexName}, []string{docType})
+
+	user, ok := resp.Aggregations["user"]
+	c.Assert(ok, Equals, true)
+
+	c.Assert(len(user.Buckets()), Equals, 2)
+	c.Assert(user.Buckets()[0].Key(), Equals, "bar")
+	c.Assert(user.Buckets()[1].Key(), Equals, "foo")
+
+	barAge := user.Buckets()[0].Aggregation("age")
+	c.Assert(barAge["count"], Equals, 1.0)
+	c.Assert(barAge["sum"], Equals, 30.0)
+
+	fooAge := user.Buckets()[1].Aggregation("age")
+	c.Assert(fooAge["count"], Equals, 1.0)
+	c.Assert(fooAge["sum"], Equals, 25.0)
+
+	age, ok := resp.Aggregations["age"]
+	c.Assert(ok, Equals, true)
+
+	c.Assert(age["count"], Equals, 2.0)
+	c.Assert(age["sum"], Equals, 25.0 + 30.0)
+}
