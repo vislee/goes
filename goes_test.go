@@ -224,7 +224,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		},
 	}
 
-	searchResults, err := conn.Search(query, []string{indexName}, []string{})
+	searchResults, err := conn.Search(query, []string{indexName}, []string{}, url.Values{})
 	c.Assert(err, IsNil)
 
 	var expectedTotal uint64 = 2
@@ -275,7 +275,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	_, err = conn.RefreshIndex(indexName)
 	c.Assert(err, IsNil)
 
-	searchResults, err = conn.Search(query, []string{indexName}, []string{})
+	searchResults, err = conn.Search(query, []string{indexName}, []string{}, url.Values{})
 	c.Assert(err, IsNil)
 
 	expectedTotal = 0
@@ -525,7 +525,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 			},
 		},
 	}
-	response, err := conn.Search(query, []string{indexName}, []string{docType})
+	response, err := conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
 
 	expectedHits := Hits{
 		Total:    1,
@@ -793,7 +793,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 		},
 	}
 
-	resp, err := conn.Search(query, []string{indexName}, []string{docType})
+	resp, err := conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
 
 	user, ok := resp.Aggregations["user"]
 	c.Assert(ok, Equals, true)
