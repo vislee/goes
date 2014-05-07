@@ -165,7 +165,7 @@ func (c *Connection) BulkSend(index string, documents []Document) (Response, err
 }
 
 // Search executes a search query against an index
-func (c *Connection) Search(query map[string]interface{}, indexList []string, typeList []string) (Response, error) {
+func (c *Connection) Search(query map[string]interface{}, indexList []string, typeList []string, extraArgs url.Values) (Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -173,6 +173,7 @@ func (c *Connection) Search(query map[string]interface{}, indexList []string, ty
 		TypeList:  typeList,
 		method:    "POST",
 		api:       "_search",
+		ExtraArgs: extraArgs,
 	}
 
 	return r.Run()
