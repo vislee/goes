@@ -86,8 +86,10 @@ func ExampleConnection_Search() {
 			},
 		},
 	}
+	
+	extraArgs := make(url.Values, 1)
 
-	searchResults, err := conn.Search(query, []string{"someindex"}, []string{""})
+	searchResults, err := conn.Search(query, []string{"someindex"}, []string{""}, extraArgs)
 
 	if err != nil {
 		panic(err)
