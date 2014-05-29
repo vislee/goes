@@ -5,6 +5,7 @@
 package goes
 
 import (
+	"net/http"
 	"net/url"
 )
 
@@ -15,6 +16,10 @@ type Connection struct {
 
 	// The port to use
 	Port string
+
+	// Client is the http client used to make requests, allowing settings things
+	// such as timeouts etc
+	Client *http.Client
 }
 
 // Represents a Request to elasticsearch

@@ -6,8 +6,11 @@ package goes_test
 
 import (
 	"fmt"
-	"github.com/belogik/goes"
+	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/belogik/goes"
 )
 
 func ExampleConnection_CreateIndex() {
@@ -86,7 +89,7 @@ func ExampleConnection_Search() {
 			},
 		},
 	}
-	
+
 	extraArgs := make(url.Values, 1)
 
 	searchResults, err := conn.Search(query, []string{"someindex"}, []string{""}, extraArgs)
@@ -142,4 +145,16 @@ func ExampleConnection_Delete() {
 	}
 
 	fmt.Printf("%s", response)
+}
+
+func ExampleConnectionOverrideHttpClient() {
+	tr := &http.Transport{
+		ResponseHeaderTimeout: 1 * time.Second,
+	}
+	cl := &http.Client{
+		Transport: tr,
+	}
+	conn := goes.NewConnection("localhost", "9200").WithClient(cl)
+
+	fmt.Printf("%v\n", conn.Client)
 }
