@@ -31,7 +31,12 @@ func (err *SearchError) Error() string {
 // This function is pretty useless for now but might be useful in a near future
 // if wee need more features like connection pooling or load balancing.
 func NewConnection(host string, port string) *Connection {
-	return &Connection{host, port}
+	return &Connection{host, port, http.DefaultClient}
+}
+
+func (c *Connection) WithClient(cl *http.Client) *Connection {
+	c.Client = cl
+	return c
 }
 
 // CreateIndex creates a new index represented by a name and a mapping
@@ -285,8 +290,6 @@ func (req *Request) Run() (Response, error) {
 
 	reader := bytes.NewReader(postData)
 
-	client := http.DefaultClient
-
 	newReq, err := http.NewRequest(req.method, req.Url(), reader)
 	if err != nil {
 		return Response{}, err
@@ -296,7 +299,7 @@ func (req *Request) Run() (Response, error) {
 		newReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 
-	resp, err := client.Do(newReq)
+	resp, err := req.Conn.Client.Do(newReq)
 	if err != nil {
 		return Response{}, err
 	}

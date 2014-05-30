@@ -6,6 +6,7 @@ package goes
 
 import (
 	. "launchpad.net/gocheck"
+	"net/http"
 	"net/url"
 	"os"
 	"testing"
@@ -38,7 +39,22 @@ func (s *GoesTestSuite) SetUpTest(c *C) {
 
 func (s *GoesTestSuite) TestNewConnection(c *C) {
 	conn := NewConnection(ES_HOST, ES_PORT)
-	c.Assert(conn, DeepEquals, &Connection{ES_HOST, ES_PORT})
+	c.Assert(conn, DeepEquals, &Connection{ES_HOST, ES_PORT, http.DefaultClient})
+}
+
+func (s *GoesTestSuite) TestWithClient(c *C) {
+	tr := &http.Transport{
+		DisableCompression:    true,
+		ResponseHeaderTimeout: 1 * time.Second,
+	}
+	cl := &http.Client{
+		Transport: tr,
+	}
+	conn := NewConnection(ES_HOST, ES_PORT).WithClient(cl)
+
+	c.Assert(conn, DeepEquals, &Connection{ES_HOST, ES_PORT, cl})
+	c.Assert(conn.Client.Transport.(*http.Transport).DisableCompression, Equals, true)
+	c.Assert(conn.Client.Transport.(*http.Transport).ResponseHeaderTimeout, Equals, 1*time.Second)
 }
 
 func (s *GoesTestSuite) TestUrl(c *C) {
