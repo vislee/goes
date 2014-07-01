@@ -585,11 +585,17 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	expectedShards := Shard{Total: 2, Successful: 1, Failed: 0}
 	c.Assert(response.Shards, Equals, expectedShards)
 
+	primarySizeInBytes := response.Indices[indexName].Index["primary_size_in_bytes"].(float64)
+	sizeInBytes := response.Indices[indexName].Index["size_in_bytes"].(float64)
+
+	c.Assert(primarySizeInBytes > 0, Equals, true)
+	c.Assert(sizeInBytes > 0, Equals, true)
+
 	expectedIndices := map[string]IndexStatus{
 		indexName: IndexStatus{
 			Index: map[string]interface{}{
-				"primary_size_in_bytes": float64(99),
-				"size_in_bytes":         float64(99),
+				"primary_size_in_bytes": primarySizeInBytes,
+				"size_in_bytes":         sizeInBytes,
 			},
 			Translog: map[string]uint64{
 				"operations": 0,
