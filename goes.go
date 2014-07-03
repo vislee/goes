@@ -159,10 +159,10 @@ func (c *Connection) BulkSend(documents []Document) (Response, error) {
 	bulkData[len(bulkData)-1] = []byte(nil)
 
 	r := Request{
-		Conn:      c,
-		method:    "POST",
-		api:       "_bulk",
-		bulkData:  bytes.Join(bulkData, []byte("\n")),
+		Conn:     c,
+		method:   "POST",
+		api:      "_bulk",
+		bulkData: bytes.Join(bulkData, []byte("\n")),
 	}
 
 	return r.Run()
@@ -356,7 +356,7 @@ func (r *Request) Url() string {
 func (a Aggregation) Buckets() []Bucket {
 	result := []Bucket{}
 	if buckets, ok := a["buckets"]; ok {
-		for _, bucket := range buckets.([]interface {}) {
+		for _, bucket := range buckets.([]interface{}) {
 			result = append(result, bucket.(map[string]interface{}))
 		}
 	}
@@ -375,7 +375,7 @@ func (b Bucket) DocCount() uint64 {
 }
 
 // Aggregation returns aggregation by name from bucket
-func (b Bucket) Aggregation(name string) Aggregation{
+func (b Bucket) Aggregation(name string) Aggregation {
 	if agg, ok := b[name]; ok {
 		return agg.(map[string]interface{})
 	} else {
