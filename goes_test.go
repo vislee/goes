@@ -195,7 +195,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	tweets := []Document{
 		Document{
 			Id:          "123",
-			Index:       nil,
+			Index:       indexName,
 			Type:        docType,
 			BulkCommand: BULK_COMMAND_INDEX,
 			Fields: map[string]interface{}{
@@ -221,7 +221,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	_, err := conn.CreateIndex(indexName, nil)
 	c.Assert(err, IsNil)
 
-	response, err := conn.BulkSend(indexName, tweets)
+	response, err := conn.BulkSend(tweets)
 	i := Item{
 		Id:      "123",
 		Type:    docType,
@@ -277,7 +277,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		},
 	}
 
-	response, err = conn.BulkSend(indexName, docToDelete)
+	response, err = conn.BulkSend(docToDelete)
 	i = Item{
 		Id:      "123",
 		Type:    docType,
@@ -475,7 +475,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 		Type:    docType,
 		Id:      docId,
 		Version: 1,
-		Found: true,
+		Found:   true,
 		Source:  source,
 	}
 
@@ -491,7 +491,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 		Type:    docType,
 		Id:      docId,
 		Version: 1,
-		Found:  true,
+		Found:   true,
 		Fields: map[string]interface{}{
 			"f1": []interface{}{"foo"},
 		},
@@ -681,7 +681,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	_, err := conn.CreateIndex(indexName, mapping)
 	c.Assert(err, IsNil)
 
-	_, err = conn.BulkSend(indexName, tweets)
+	_, err = conn.BulkSend(tweets)
 	c.Assert(err, IsNil)
 
 	_, err = conn.RefreshIndex(indexName)
@@ -728,7 +728,6 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	c.Assert(len(searchResults.Hits.Hits), Equals, 0)
 }
 
-
 func (s *GoesTestSuite) TestAggregations(c *C) {
 	indexName := "testaggs"
 	docType := "tweet"
@@ -740,9 +739,9 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 			Type:        docType,
 			BulkCommand: BULK_COMMAND_INDEX,
 			Fields: map[string]interface{}{
-				"user"    : "foo",
-				"message" : "some foo message",
-				"age"     : 25,
+				"user":    "foo",
+				"message": "some foo message",
+				"age":     25,
 			},
 		},
 
@@ -752,9 +751,9 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 			Type:        docType,
 			BulkCommand: BULK_COMMAND_INDEX,
 			Fields: map[string]interface{}{
-				"user"    : "bar",
-				"message" : "some bar message",
-				"age"     : 30,
+				"user":    "bar",
+				"message": "some bar message",
+				"age":     30,
 			},
 		},
 
@@ -764,8 +763,8 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 			Type:        docType,
 			BulkCommand: BULK_COMMAND_INDEX,
 			Fields: map[string]interface{}{
-				"user"    :    "foo",
-				"message" : "another foo message",
+				"user":    "foo",
+				"message": "another foo message",
 			},
 		},
 	}
@@ -784,7 +783,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 	_, err := conn.CreateIndex(indexName, mapping)
 	c.Assert(err, IsNil)
 
-	_, err = conn.BulkSend(indexName, tweets)
+	_, err = conn.BulkSend(tweets)
 	c.Assert(err, IsNil)
 
 	_, err = conn.RefreshIndex(indexName)
@@ -836,5 +835,5 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 	c.Assert(ok, Equals, true)
 
 	c.Assert(age["count"], Equals, 2.0)
-	c.Assert(age["sum"], Equals, 25.0 + 30.0)
+	c.Assert(age["sum"], Equals, 25.0+30.0)
 }
