@@ -100,9 +100,9 @@ func (c *Connection) IndexStatus(indexList []string) (Response, error) {
 	return r.Run()
 }
 
-// Bulk adds multiple documents in bulk mode to the index for a given type
-func (c *Connection) BulkSend(index string, documents []Document) (Response, error) {
-	// We do not generate a traditionnal JSON here (often a one liner)
+// Bulk adds multiple documents in bulk mode
+func (c *Connection) BulkSend(documents []Document) (Response, error) {
+	// We do not generate a traditional JSON here (often a one liner)
 	// Elasticsearch expects one line of JSON per line (EOL = \n)
 	// plus an extra \n at the very end of the document
 	//
@@ -160,7 +160,6 @@ func (c *Connection) BulkSend(index string, documents []Document) (Response, err
 
 	r := Request{
 		Conn:      c,
-		IndexList: []string{index},
 		method:    "POST",
 		api:       "_bulk",
 		bulkData:  bytes.Join(bulkData, []byte("\n")),

@@ -195,7 +195,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	tweets := []Document{
 		Document{
 			Id:          "123",
-			Index:       nil,
+			Index:       indexName,
 			Type:        docType,
 			BulkCommand: BULK_COMMAND_INDEX,
 			Fields: map[string]interface{}{
@@ -221,7 +221,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	_, err := conn.CreateIndex(indexName, nil)
 	c.Assert(err, IsNil)
 
-	response, err := conn.BulkSend(indexName, tweets)
+	response, err := conn.BulkSend(tweets)
 	i := Item{
 		Id:      "123",
 		Type:    docType,
@@ -277,7 +277,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		},
 	}
 
-	response, err = conn.BulkSend(indexName, docToDelete)
+	response, err = conn.BulkSend(docToDelete)
 	i = Item{
 		Id:      "123",
 		Type:    docType,
@@ -681,7 +681,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	_, err := conn.CreateIndex(indexName, mapping)
 	c.Assert(err, IsNil)
 
-	_, err = conn.BulkSend(indexName, tweets)
+	_, err = conn.BulkSend(tweets)
 	c.Assert(err, IsNil)
 
 	_, err = conn.RefreshIndex(indexName)
@@ -784,7 +784,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 	_, err := conn.CreateIndex(indexName, mapping)
 	c.Assert(err, IsNil)
 
-	_, err = conn.BulkSend(indexName, tweets)
+	_, err = conn.BulkSend(tweets)
 	c.Assert(err, IsNil)
 
 	_, err = conn.RefreshIndex(indexName)
