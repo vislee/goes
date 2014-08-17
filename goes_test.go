@@ -193,7 +193,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	docType := "tweet"
 
 	tweets := []Document{
-		Document{
+		{
 			Id:          "123",
 			Index:       indexName,
 			Type:        docType,
@@ -204,7 +204,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 			},
 		},
 
-		Document{
+		{
 			Id:          nil,
 			Index:       indexName,
 			Type:        docType,
@@ -263,13 +263,13 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	c.Assert(checked, Equals, 2)
 
 	docToDelete := []Document{
-		Document{
+		{
 			Id:          "123",
 			Index:       indexName,
 			Type:        docType,
 			BulkCommand: BULK_COMMAND_DELETE,
 		},
-		Document{
+		{
 			Id:          extraDocId,
 			Index:       indexName,
 			Type:        docType,
@@ -601,7 +601,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"must": []map[string]interface{}{
-					map[string]interface{}{
+					{
 						"match_all": map[string]interface{}{},
 					},
 				},
@@ -614,7 +614,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 		Total:    1,
 		MaxScore: 1.0,
 		Hits: []Hit{
-			Hit{
+			{
 				Index:  indexName,
 				Type:   docType,
 				Id:     docId,
@@ -659,7 +659,7 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	c.Assert(sizeInBytes > 0, Equals, true)
 
 	expectedIndices := map[string]IndexStatus{
-		indexName: IndexStatus{
+		indexName: {
 			Index: map[string]interface{}{
 				"primary_size_in_bytes": primarySizeInBytes,
 				"size_in_bytes":         sizeInBytes,
@@ -700,7 +700,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	docType := "tweet"
 
 	tweets := []Document{
-		Document{
+		{
 			Id:          nil,
 			Index:       indexName,
 			Type:        docType,
@@ -711,7 +711,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 			},
 		},
 
-		Document{
+		{
 			Id:          nil,
 			Index:       indexName,
 			Type:        docType,
@@ -722,7 +722,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 			},
 		},
 
-		Document{
+		{
 			Id:          nil,
 			Index:       indexName,
 			Type:        docType,
@@ -800,7 +800,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 	docType := "tweet"
 
 	tweets := []Document{
-		Document{
+		{
 			Id:          nil,
 			Index:       indexName,
 			Type:        docType,
@@ -812,7 +812,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 			},
 		},
 
-		Document{
+		{
 			Id:          nil,
 			Index:       indexName,
 			Type:        docType,
@@ -824,7 +824,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 			},
 		},
 
-		Document{
+		{
 			Id:          nil,
 			Index:       indexName,
 			Type:        docType,
