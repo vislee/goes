@@ -8,13 +8,35 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/belogik/goes"
 )
 
+var (
+	ES_HOST = "localhost"
+	ES_PORT = "9200"
+)
+
+func getConnection() (conn *goes.Connection) {
+	h := os.Getenv("TEST_ELASTICSEARCH_HOST")
+	if h == "" {
+		h = ES_HOST
+	}
+
+	p := os.Getenv("TEST_ELASTICSEARCH_PORT")
+	if p == "" {
+		p = ES_PORT
+	}
+
+	conn = goes.NewConnection(h, p)
+
+	return
+}
+
 func ExampleConnection_CreateIndex() {
-	conn := goes.NewConnection("localhost", "9200")
+	conn := getConnection()
 
 	mapping := map[string]interface{}{
 		"settings": map[string]interface{}{
@@ -43,7 +65,7 @@ func ExampleConnection_CreateIndex() {
 }
 
 func ExampleConnection_DeleteIndex() {
-	conn := goes.NewConnection("localhost", "9200")
+	conn := getConnection()
 	resp, err := conn.DeleteIndex("yourinde")
 
 	if err != nil {
@@ -54,7 +76,7 @@ func ExampleConnection_DeleteIndex() {
 }
 
 func ExampleConnection_RefreshIndex() {
-	conn := goes.NewConnection("localhost", "9200")
+	conn := getConnection()
 	resp, err := conn.RefreshIndex("yourindex")
 
 	if err != nil {
@@ -65,7 +87,7 @@ func ExampleConnection_RefreshIndex() {
 }
 
 func ExampleConnection_Search() {
-	conn := goes.NewConnection("localhost", "9200")
+	conn := getConnection()
 
 	var query = map[string]interface{}{
 		"query": map[string]interface{}{
@@ -102,7 +124,7 @@ func ExampleConnection_Search() {
 }
 
 func ExampleConnection_Index() {
-	conn := goes.NewConnection("localhost", "9200")
+	conn := getConnection()
 
 	d := goes.Document{
 		Index: "twitter",
@@ -126,7 +148,7 @@ func ExampleConnection_Index() {
 }
 
 func ExampleConnection_Delete() {
-	conn := goes.NewConnection("localhost", "9200")
+	conn := getConnection()
 
 	//[create index, index document ...]
 
@@ -154,7 +176,8 @@ func ExampleConnectionOverrideHttpClient() {
 	cl := &http.Client{
 		Transport: tr,
 	}
-	conn := goes.NewConnection("localhost", "9200").WithClient(cl)
+	conn := getConnection()
+	conn.WithClient(cl)
 
 	fmt.Printf("%v\n", conn.Client)
 }
