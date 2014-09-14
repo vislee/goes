@@ -196,6 +196,23 @@ func (c *Connection) Search(query map[string]interface{}, indexList []string, ty
 	return r.Run()
 }
 
+//Query runs a query against an index using the provided http method.
+//This method can be used to execute a delete by query, just pass in "DELETE"
+//for the HTTP method.
+func (c *Connection) Query(query map[string]interface{}, indexList []string, typeList []string, httpMethod string, extraArgs url.Values) (Response, error) {
+	r := Request{
+		Conn:      c,
+		Query:     query,
+		IndexList: indexList,
+		TypeList:  typeList,
+		method:    httpMethod,
+		api:       "_query",
+		ExtraArgs: extraArgs,
+	}
+
+	return r.Run()
+}
+
 // Scan starts scroll over an index
 func (c *Connection) Scan(query map[string]interface{}, indexList []string, typeList []string, timeout string, size int) (Response, error) {
 	v := url.Values{}
