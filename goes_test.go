@@ -710,7 +710,7 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	// gives ES some time to do its job
 	time.Sleep(1 * time.Second)
 
-	response, err := conn.IndexStatus([]string{"_all"})
+	response, err := conn.IndexStatus([]string{"testindexstatus"})
 	c.Assert(err, IsNil)
 
 	expectedShards := Shard{Total: 2, Successful: 1, Failed: 0}
