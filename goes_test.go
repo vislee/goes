@@ -227,6 +227,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		Type:    docType,
 		Version: 1,
 		Index:   indexName,
+		Status:  201, //201 for indexing ( https://issues.apache.org/jira/browse/CONNECTORS-634 )
 	}
 	c.Assert(response.Items[0][BULK_COMMAND_INDEX], Equals, i)
 	c.Assert(err, IsNil)
@@ -283,6 +284,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		Type:    docType,
 		Version: 2,
 		Index:   indexName,
+		Status:  200, //200 for updates
 	}
 	c.Assert(response.Items[0][BULK_COMMAND_DELETE], Equals, i)
 
