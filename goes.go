@@ -350,6 +350,17 @@ func (req *Request) Run() (Response, error) {
 		return Response{}, err
 	}
 
+	if req.api == "_bulk" && esResp.Errors {
+		for _, item := range esResp.Items {
+			for _, i := range item {
+				if i.Error != "" {
+					return Response{}, &SearchError{i.Error, i.Status}
+				}
+			}
+		}
+		return Response{}, &SearchError{Msg: "Unknown error while bulk indexing"}
+	}
+
 	if esResp.Error != "" {
 		return Response{}, &SearchError{esResp.Error, esResp.Status}
 	}

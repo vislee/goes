@@ -59,6 +59,7 @@ type Request struct {
 type Response struct {
 	Acknowledged bool
 	Error        string
+	Errors       bool
 	Status       uint64
 	Took         uint64
 	TimedOut     bool  `json:"timed_out"`
@@ -111,6 +112,8 @@ type Item struct {
 	Id      string `json:"_id"`
 	Index   string `json:"_index"`
 	Version int    `json:"_version"`
+	Error   string `json:"error"`
+	Status  uint64 `json:"status"`
 }
 
 // Represents the "_all" field when calling the _stats API
