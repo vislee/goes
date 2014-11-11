@@ -1012,3 +1012,24 @@ func (s *GoesTestSuite) TestPutMapping(c *C) {
 	c.Assert(response.Acknowledged, Equals, true)
 	c.Assert(response.TimedOut, Equals, false)
 }
+
+func (s *GoesTestSuite) TestIndicesExist(c *C) {
+	indexName := "testindicesexist"
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	// just in case
+	conn.DeleteIndex(indexName)
+
+	exists, err := conn.IndicesExist(indexName)
+	c.Assert(exists, Equals, false)
+
+	_, err = conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	exists, err = conn.IndicesExist(indexName)
+	c.Assert(exists, Equals, true)
+
+	exists, err = conn.IndicesExist(indexName, "nonexistent")
+	c.Assert(exists, Equals, false)
+}
