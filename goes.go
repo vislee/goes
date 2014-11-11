@@ -345,10 +345,14 @@ func (req *Request) Run() (Response, error) {
 	}
 
 	esResp := new(Response)
-	err = json.Unmarshal(body, &esResp)
-	if err != nil {
-		return Response{}, err
-	}
+    if req.method == "HEAD" {
+        esResp.Status = uint64(resp.StatusCode)
+    } else {
+        err = json.Unmarshal(body, &esResp)
+        if err != nil {
+            return Response{}, err
+        }
+    }
 
 	if req.api == "_bulk" && esResp.Errors {
 		for _, item := range esResp.Items {
