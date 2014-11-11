@@ -441,3 +441,17 @@ func (c *Connection) PutMapping(typeName string, mapping map[string]interface{},
 
 	return r.Run()
 }
+
+// IndicesExist checks whether index (or indices) exist on the server
+func (c *Connection) IndicesExist(indexes ...string) (bool, error) {
+
+	r := Request{
+		Conn:      c,
+		IndexList: indexes,
+		method:    "HEAD",
+	}
+
+	resp, err := r.Run()
+
+	return resp.Status == 200, err
+}
