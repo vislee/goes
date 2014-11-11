@@ -970,3 +970,45 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 	c.Assert(age["count"], Equals, 2.0)
 	c.Assert(age["sum"], Equals, 25.0+30.0)
 }
+
+func (s *GoesTestSuite) TestPutMapping(c *C) {
+	indexName := "testputmapping"
+	docType := "tweet"
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	// just in case
+	conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	d := Document{
+		Index: indexName,
+		Type:  docType,
+		Fields: map[string]interface{}{
+			"user":    "foo",
+			"message": "bar",
+		},
+	}
+
+	response, err := conn.Index(d, url.Values{})
+	c.Assert(err, IsNil)
+
+	mapping := map[string]interface{}{
+		"tweet": map[string]interface{}{
+			"properties": map[string]interface{}{
+				"count": map[string]interface{}{
+					"type":  "integer",
+					"index": "not_analyzed",
+					"store": true,
+				},
+			},
+		},
+	}
+	response, err = conn.PutMapping("tweet", mapping, indexName)
+	c.Assert(err, IsNil)
+
+	c.Assert(response.Acknowledged, Equals, true)
+	c.Assert(response.TimedOut, Equals, false)
+}

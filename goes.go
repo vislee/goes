@@ -423,3 +423,17 @@ func (b Bucket) Aggregation(name string) Aggregation {
 		return Aggregation{}
 	}
 }
+
+// PutMapping registers a specific mapping for one or more types in one or more indexes
+func (c *Connection) PutMapping(typeName string, mapping map[string]interface{}, indexes ...string) (Response, error) {
+
+	r := Request{
+		Conn:      c,
+		Query:     mapping,
+		IndexList: indexes,
+		method:    "PUT",
+		api:       "_mappings/" + typeName,
+	}
+
+	return r.Run()
+}
