@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -1032,4 +1033,80 @@ func (s *GoesTestSuite) TestIndicesExist(c *C) {
 
 	exists, err = conn.IndicesExist(indexName, "nonexistent")
 	c.Assert(exists, Equals, false)
+}
+
+func (s *GoesTestSuite) TestUpdate(c *C) {
+	indexName := "testupdate"
+	docType := "tweet"
+	docId := "1234"
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	// just in case
+	conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	d := Document{
+		Index: indexName,
+		Type:  docType,
+		Id:    docId,
+		Fields: map[string]interface{}{
+			"user":    "foo",
+			"message": "bar",
+			"counter": 1,
+		},
+	}
+
+	extraArgs := make(url.Values, 1)
+	response, err := conn.Index(d, extraArgs)
+	c.Assert(err, IsNil)
+
+	expectedResponse := Response{
+		Index:   indexName,
+		Id:      docId,
+		Type:    docType,
+		Version: 1,
+	}
+
+	c.Assert(response, DeepEquals, expectedResponse)
+
+	// Now that we have an ordinary document indexed, try updating it
+	query := map[string]interface{}{
+		"script": "ctx._source.counter += count",
+		"params": map[string]interface{}{
+			"count": 5,
+		},
+		"upsert": map[string]interface{}{
+			"message": "candybar",
+			"user":    "admin",
+			"counter": 1,
+		},
+	}
+
+	response, err = conn.Update(d, query, extraArgs)
+	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting disabled") {
+		c.Skip("Scripting is disabled on server, skipping this test")
+		return
+	}
+
+	c.Assert(err, Equals, nil)
+
+	response, err = conn.Get(indexName, docType, docId, url.Values{})
+	c.Assert(err, Equals, nil)
+	c.Assert(response.Source["counter"], Equals, float64(6))
+	c.Assert(response.Source["user"], Equals, "foo")
+	c.Assert(response.Source["message"], Equals, "bar")
+
+	// Test another document, non-existent
+	docId = "555"
+	d.Id = docId
+	response, err = conn.Update(d, query, extraArgs)
+	c.Assert(err, Equals, nil)
+
+	response, err = conn.Get(indexName, docType, docId, url.Values{})
+	c.Assert(err, Equals, nil)
+	c.Assert(response.Source["user"], Equals, "admin")
+	c.Assert(response.Source["message"], Equals, "candybar")
 }
