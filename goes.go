@@ -381,7 +381,7 @@ func (r *Request) Url() string {
 	}
 
 	// XXX : for indexing documents using the normal (non bulk) API
-	if len(r.api) == 0 && len(r.id) > 0 {
+	if len(r.id) > 0 {
 		path += "/" + r.id
 	}
 
@@ -454,4 +454,19 @@ func (c *Connection) IndicesExist(indexes ...string) (bool, error) {
 	resp, err := r.Run()
 
 	return resp.Status == 200, err
+}
+
+func (c *Connection) Update(d Document, query map[string]interface{}, extraArgs url.Values) (Response, error) {
+	r := Request{
+		Conn:      c,
+		Query:     query,
+		IndexList: []string{d.Index.(string)},
+		TypeList:  []string{d.Type},
+		ExtraArgs: extraArgs,
+		method:    "POST",
+		api:       "_update",
+		id:        d.Id.(string),
+	}
+
+	return r.Run()
 }
