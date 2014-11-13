@@ -443,6 +443,18 @@ func (c *Connection) PutMapping(typeName string, mapping map[string]interface{},
 	return r.Run()
 }
 
+func (c *Connection) GetMapping(types []string, indexes ...string) (Response, error) {
+
+	r := Request{
+		Conn:      c,
+		IndexList: indexes,
+		method:    "GET",
+		api:       "_mapping/" + strings.Join(types, ","),
+	}
+
+	return r.Run()
+}
+
 // IndicesExist checks whether index (or indices) exist on the server
 func (c *Connection) IndicesExist(indexes ...string) (bool, error) {
 

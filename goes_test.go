@@ -1119,3 +1119,36 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	c.Assert(response.Source["user"], Equals, "admin")
 	c.Assert(response.Source["message"], Equals, "candybar")
 }
+
+func (s *GoesTestSuite) TestGetMapping(c *C) {
+	indexName := "testmapping"
+	docType := "tweet"
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	// just in case
+	conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	response, err := conn.GetMapping([]string{docType}, indexName)
+	c.Assert(err, Equals, nil)
+	c.Assert(len(response.Raw), Equals, 0)
+
+	d := Document{
+		Index: indexName,
+		Type:  docType,
+		Fields: map[string]interface{}{
+			"user":    "foo",
+			"message": "bar",
+		},
+	}
+
+	response, err = conn.Index(d, url.Values{})
+	c.Assert(err, IsNil)
+
+	response, err = conn.GetMapping([]string{docType}, indexName)
+	c.Assert(err, Equals, nil)
+	c.Assert(len(response.Raw), Not(Equals), 0)
+}
