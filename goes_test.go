@@ -172,6 +172,7 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 
 	expectedResponse := Response{}
 	expectedResponse.Acknowledged = true
+	resp.Raw = nil
 	c.Assert(resp, DeepEquals, expectedResponse)
 }
 
@@ -362,6 +363,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 		Version: 1,
 	}
 
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -426,6 +428,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 		Version: 1,
 	}
 
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -495,6 +498,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		// XXX : even after a DELETE the version number seems to be incremented
 		Version: 2,
 	}
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	response, err = conn.Delete(d, url.Values{})
@@ -508,6 +512,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		// XXX : even after a DELETE the version number seems to be incremented
 		Version: 3,
 	}
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -567,6 +572,7 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 		Id:      "",
 		Version: 0,
 	}
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	//should be 0 docs after delete by query
@@ -613,6 +619,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 		Source:  source,
 	}
 
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	fields := make(url.Values, 1)
@@ -631,6 +638,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 		},
 	}
 
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -1070,6 +1078,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 		Version: 1,
 	}
 
+	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	// Now that we have an ordinary document indexed, try updating it

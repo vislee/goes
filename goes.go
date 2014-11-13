@@ -352,6 +352,7 @@ func (req *Request) Run() (Response, error) {
 		if err != nil {
 			return Response{}, err
 		}
+		json.Unmarshal(body, &esResp.Raw)
 	}
 
 	if req.api == "_bulk" && esResp.Errors {
