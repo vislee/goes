@@ -1035,6 +1035,7 @@ func (s *GoesTestSuite) TestIndicesExist(c *C) {
 	_, err = conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
 	defer conn.DeleteIndex(indexName)
+	time.Sleep(200 * time.Millisecond)
 
 	exists, err = conn.IndicesExist(indexName)
 	c.Assert(exists, Equals, true)
@@ -1070,6 +1071,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	extraArgs := make(url.Values, 1)
 	response, err := conn.Index(d, extraArgs)
 	c.Assert(err, IsNil)
+	time.Sleep(200 * time.Millisecond)
 
 	expectedResponse := Response{
 		Index:   indexName,
@@ -1099,6 +1101,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 		c.Skip("Scripting is disabled on server, skipping this test")
 		return
 	}
+	time.Sleep(200 * time.Millisecond)
 
 	c.Assert(err, Equals, nil)
 
@@ -1113,6 +1116,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	d.Id = docId
 	response, err = conn.Update(d, query, extraArgs)
 	c.Assert(err, Equals, nil)
+	time.Sleep(200 * time.Millisecond)
 
 	response, err = conn.Get(indexName, docType, docId, url.Values{})
 	c.Assert(err, Equals, nil)
@@ -1132,6 +1136,8 @@ func (s *GoesTestSuite) TestGetMapping(c *C) {
 	c.Assert(err, IsNil)
 	defer conn.DeleteIndex(indexName)
 
+	time.Sleep(300 * time.Millisecond)
+
 	response, err := conn.GetMapping([]string{docType}, indexName)
 	c.Assert(err, Equals, nil)
 	c.Assert(len(response.Raw), Equals, 0)
@@ -1147,6 +1153,7 @@ func (s *GoesTestSuite) TestGetMapping(c *C) {
 
 	response, err = conn.Index(d, url.Values{})
 	c.Assert(err, IsNil)
+	time.Sleep(200 * time.Millisecond)
 
 	response, err = conn.GetMapping([]string{docType}, indexName)
 	c.Assert(err, Equals, nil)
