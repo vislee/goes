@@ -1015,7 +1015,7 @@ func (s *GoesTestSuite) TestPutMapping(c *C) {
 			},
 		},
 	}
-	response, err = conn.PutMapping("tweet", mapping, indexName)
+	response, err = conn.PutMapping("tweet", mapping, []string{indexName})
 	c.Assert(err, IsNil)
 
 	c.Assert(response.Acknowledged, Equals, true)
@@ -1023,24 +1023,25 @@ func (s *GoesTestSuite) TestPutMapping(c *C) {
 }
 
 func (s *GoesTestSuite) TestIndicesExist(c *C) {
-	indexName := "testindicesexist"
+	indices := []string{"testindicesexist"}
 
 	conn := NewConnection(ES_HOST, ES_PORT)
 	// just in case
-	conn.DeleteIndex(indexName)
+	conn.DeleteIndex(indices[0])
 
-	exists, err := conn.IndicesExist(indexName)
+	exists, err := conn.IndicesExist(indices)
 	c.Assert(exists, Equals, false)
 
-	_, err = conn.CreateIndex(indexName, map[string]interface{}{})
+	_, err = conn.CreateIndex(indices[0], map[string]interface{}{})
 	c.Assert(err, IsNil)
-	defer conn.DeleteIndex(indexName)
+	defer conn.DeleteIndex(indices[0])
 	time.Sleep(200 * time.Millisecond)
 
-	exists, err = conn.IndicesExist(indexName)
+	exists, err = conn.IndicesExist(indices)
 	c.Assert(exists, Equals, true)
 
-	exists, err = conn.IndicesExist(indexName, "nonexistent")
+	indices = append(indices, "nonexistent")
+	exists, err = conn.IndicesExist(indices)
 	c.Assert(exists, Equals, false)
 }
 
@@ -1138,7 +1139,7 @@ func (s *GoesTestSuite) TestGetMapping(c *C) {
 
 	time.Sleep(300 * time.Millisecond)
 
-	response, err := conn.GetMapping([]string{docType}, indexName)
+	response, err := conn.GetMapping([]string{docType}, []string{indexName})
 	c.Assert(err, Equals, nil)
 	c.Assert(len(response.Raw), Equals, 0)
 
@@ -1155,7 +1156,7 @@ func (s *GoesTestSuite) TestGetMapping(c *C) {
 	c.Assert(err, IsNil)
 	time.Sleep(200 * time.Millisecond)
 
-	response, err = conn.GetMapping([]string{docType}, indexName)
+	response, err = conn.GetMapping([]string{docType}, []string{indexName})
 	c.Assert(err, Equals, nil)
 	c.Assert(len(response.Raw), Not(Equals), 0)
 }

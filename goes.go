@@ -430,7 +430,7 @@ func (b Bucket) Aggregation(name string) Aggregation {
 }
 
 // PutMapping registers a specific mapping for one or more types in one or more indexes
-func (c *Connection) PutMapping(typeName string, mapping map[string]interface{}, indexes ...string) (Response, error) {
+func (c *Connection) PutMapping(typeName string, mapping map[string]interface{}, indexes []string) (Response, error) {
 
 	r := Request{
 		Conn:      c,
@@ -443,7 +443,7 @@ func (c *Connection) PutMapping(typeName string, mapping map[string]interface{},
 	return r.Run()
 }
 
-func (c *Connection) GetMapping(types []string, indexes ...string) (Response, error) {
+func (c *Connection) GetMapping(types []string, indexes []string) (Response, error) {
 
 	r := Request{
 		Conn:      c,
@@ -456,7 +456,7 @@ func (c *Connection) GetMapping(types []string, indexes ...string) (Response, er
 }
 
 // IndicesExist checks whether index (or indices) exist on the server
-func (c *Connection) IndicesExist(indexes ...string) (bool, error) {
+func (c *Connection) IndicesExist(indexes []string) (bool, error) {
 
 	r := Request{
 		Conn:      c,
