@@ -478,8 +478,11 @@ func (c *Connection) Update(d Document, query map[string]interface{}, extraArgs 
 		ExtraArgs: extraArgs,
 		method:    "POST",
 		api:       "_update",
-		id:        d.Id.(string),
 	}
+
+    if d.Id != nil {
+		r.id = d.Id.(string)
+    }
 
 	return r.Run()
 }
