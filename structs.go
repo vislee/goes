@@ -88,6 +88,8 @@ type Response struct {
 	ScrollId string `json:"_scroll_id"`
 
 	Aggregations map[string]Aggregation `json:"aggregations,omitempty"`
+
+	Raw map[string]interface{}
 }
 
 // Represents an aggregation from response

@@ -345,9 +345,14 @@ func (req *Request) Run() (Response, error) {
 	}
 
 	esResp := new(Response)
-	err = json.Unmarshal(body, &esResp)
-	if err != nil {
-		return Response{}, err
+	if req.method == "HEAD" {
+		esResp.Status = uint64(resp.StatusCode)
+	} else {
+		err = json.Unmarshal(body, &esResp)
+		if err != nil {
+			return Response{}, err
+		}
+		json.Unmarshal(body, &esResp.Raw)
 	}
 
 	if req.api == "_bulk" && esResp.Errors {
@@ -377,7 +382,7 @@ func (r *Request) Url() string {
 	}
 
 	// XXX : for indexing documents using the normal (non bulk) API
-	if len(r.api) == 0 && len(r.id) > 0 {
+	if len(r.id) > 0 {
 		path += "/" + r.id
 	}
 
@@ -422,4 +427,62 @@ func (b Bucket) Aggregation(name string) Aggregation {
 	} else {
 		return Aggregation{}
 	}
+}
+
+// PutMapping registers a specific mapping for one or more types in one or more indexes
+func (c *Connection) PutMapping(typeName string, mapping map[string]interface{}, indexes []string) (Response, error) {
+
+	r := Request{
+		Conn:      c,
+		Query:     mapping,
+		IndexList: indexes,
+		method:    "PUT",
+		api:       "_mappings/" + typeName,
+	}
+
+	return r.Run()
+}
+
+func (c *Connection) GetMapping(types []string, indexes []string) (Response, error) {
+
+	r := Request{
+		Conn:      c,
+		IndexList: indexes,
+		method:    "GET",
+		api:       "_mapping/" + strings.Join(types, ","),
+	}
+
+	return r.Run()
+}
+
+// IndicesExist checks whether index (or indices) exist on the server
+func (c *Connection) IndicesExist(indexes []string) (bool, error) {
+
+	r := Request{
+		Conn:      c,
+		IndexList: indexes,
+		method:    "HEAD",
+	}
+
+	resp, err := r.Run()
+
+	return resp.Status == 200, err
+}
+
+func (c *Connection) Update(d Document, query map[string]interface{}, extraArgs url.Values) (Response, error) {
+	r := Request{
+		Conn:      c,
+		Query:     query,
+		IndexList: []string{d.Index.(string)},
+		TypeList:  []string{d.Type},
+		ExtraArgs: extraArgs,
+		method:    "POST",
+		api:       "_update",
+	}
+
+    if d.Id != nil {
+		r.id = d.Id.(string)
+    }
+
+	return r.Run()
 }
