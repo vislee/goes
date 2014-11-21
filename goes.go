@@ -75,6 +75,20 @@ func (c *Connection) RefreshIndex(name string) (Response, error) {
 	return r.Run()
 }
 
+// Optimize an index represented by a name, extra args are also allowed please check:
+// http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-optimize.html#indices-optimize
+func (c *Connection) Optimize(indexList []string, extraArgs url.Values) (Response, error) {
+	r := Request{
+		Conn:      c,
+		IndexList: indexList,
+		ExtraArgs: extraArgs,
+		method:    "POST",
+		api:       "_optimize",
+	}
+
+	return r.Run()
+}
+
 // Stats fetches statistics (_stats) for the current elasticsearch server
 func (c *Connection) Stats(indexList []string, extraArgs url.Values) (Response, error) {
 	r := Request{

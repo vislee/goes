@@ -190,6 +190,26 @@ func (s *GoesTestSuite) TestRefreshIndex(c *C) {
 	c.Assert(err, IsNil)
 }
 
+func (s *GoesTestSuite) TestOptimize(c *C) {
+	conn := NewConnection(ES_HOST, ES_PORT)
+	indexName := "testoptimize"
+
+	conn.DeleteIndex(indexName)
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+
+	// we must wait for a bit otherwise ES crashes
+	time.Sleep(1 * time.Second)
+
+	response, err := conn.Optimize([]string{indexName}, url.Values{"max_num_segments" : []string{"1"}})
+	c.Assert(err, IsNil)
+
+	c.Assert(response.All.Indices[indexName].Primaries["docs"].Count, Equals, 0)
+
+	_, err = conn.DeleteIndex(indexName)
+	c.Assert(err, IsNil)
+}
+
 func (s *GoesTestSuite) TestBulkSend(c *C) {
 	indexName := "testbulkadd"
 	docType := "tweet"
