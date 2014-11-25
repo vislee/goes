@@ -486,3 +486,16 @@ func (c *Connection) Update(d Document, query map[string]interface{}, extraArgs 
 
 	return r.Run()
 }
+
+// DeleteMapping deletes a mapping along with all data in the type
+func (c *Connection) DeleteMapping(typeName string, indexes []string) (Response, error) {
+
+	r := Request{
+		Conn:      c,
+		IndexList: indexes,
+		method:    "DELETE",
+		api:       "_mappings/" + typeName,
+	}
+
+	return r.Run()
+}
