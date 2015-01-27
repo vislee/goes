@@ -201,7 +201,7 @@ func (s *GoesTestSuite) TestOptimize(c *C) {
 	// we must wait for a bit otherwise ES crashes
 	time.Sleep(1 * time.Second)
 
-	response, err := conn.Optimize([]string{indexName}, url.Values{"max_num_segments" : []string{"1"}})
+	response, err := conn.Optimize([]string{indexName}, url.Values{"max_num_segments": []string{"1"}})
 	c.Assert(err, IsNil)
 
 	c.Assert(response.All.Indices[indexName].Primaries["docs"].Count, Equals, 0)
@@ -720,6 +720,52 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 	}
 
 	c.Assert(response.Hits, DeepEquals, expectedHits)
+}
+
+func (s *GoesTestSuite) TestCount(c *C) {
+	indexName := "testcount"
+	docType := "tweet"
+	docId := "1234"
+	source := map[string]interface{}{
+		"user":    "foo",
+		"message": "bar",
+	}
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	d := Document{
+		Index:  indexName,
+		Type:   docType,
+		Id:     docId,
+		Fields: source,
+	}
+
+	_, err = conn.Index(d, url.Values{})
+	c.Assert(err, IsNil)
+
+	_, err = conn.RefreshIndex(indexName)
+	c.Assert(err, IsNil)
+
+	// I can feel my eyes bleeding
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": []map[string]interface{}{
+					{
+						"match_all": map[string]interface{}{},
+					},
+				},
+			},
+		},
+	}
+	response, err := conn.Count(query, []string{indexName}, []string{docType}, url.Values{})
+
+	c.Assert(response.Count, Equals, 1)
 }
 
 func (s *GoesTestSuite) TestIndexStatus(c *C) {

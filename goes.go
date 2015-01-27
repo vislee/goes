@@ -210,6 +210,21 @@ func (c *Connection) Search(query map[string]interface{}, indexList []string, ty
 	return r.Run()
 }
 
+// Count executes a count query against an index, use the Count field in the response for the result
+func (c *Connection) Count(query map[string]interface{}, indexList []string, typeList []string, extraArgs url.Values) (Response, error) {
+	r := Request{
+		Conn:      c,
+		Query:     query,
+		IndexList: indexList,
+		TypeList:  typeList,
+		method:    "POST",
+		api:       "_count",
+		ExtraArgs: extraArgs,
+	}
+
+	return r.Run()
+}
+
 //Query runs a query against an index using the provided http method.
 //This method can be used to execute a delete by query, just pass in "DELETE"
 //for the HTTP method.
@@ -494,9 +509,9 @@ func (c *Connection) Update(d Document, query map[string]interface{}, extraArgs 
 		api:       "_update",
 	}
 
-    if d.Id != nil {
+	if d.Id != nil {
 		r.id = d.Id.(string)
-    }
+	}
 
 	return r.Run()
 }
