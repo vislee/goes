@@ -70,6 +70,7 @@ type Response struct {
 	Type         string `json:"_type"`
 	Version      int    `json:"_version"`
 	Found        bool
+	Count        int
 
 	// Used by the _stats API
 	All All `json:"_all"`
