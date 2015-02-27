@@ -240,6 +240,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 	conn := NewConnection(ES_HOST, ES_PORT)
 
+	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, nil)
 	c.Assert(err, IsNil)
 
