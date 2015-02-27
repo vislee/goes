@@ -5,7 +5,7 @@
 package goes
 
 import (
-	. "launchpad.net/gocheck"
+	. "gopkg.in/check.v1"
 	"net/http"
 	"net/url"
 	"os"
