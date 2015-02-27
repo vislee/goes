@@ -562,3 +562,17 @@ func (c *Connection) AddAlias(alias string, indexes []string) (Response, error) 
 func (c *Connection) RemoveAlias(alias string, indexes []string) (Response, error) {
 	return c.modifyAlias("remove", alias, indexes)
 }
+
+// AliasExists checks whether alias is defined on the server
+func (c *Connection) AliasExists(alias string) (bool, error) {
+
+	r := Request{
+		Conn:   c,
+		method: "HEAD",
+		api:    "_alias/" + alias,
+	}
+
+	resp, err := r.Run()
+
+	return resp.Status == 200, err
+}

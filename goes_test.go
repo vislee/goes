@@ -1363,3 +1363,28 @@ func (s *GoesTestSuite) TestRemoveAlias(c *C) {
 	_, err = conn.Get(aliasName, docType, docId, url.Values{})
 	c.Assert(err.Error(), Equals, "[404] IndexMissingException[["+aliasName+"] missing]")
 }
+
+func (s *GoesTestSuite) TestAliasExists(c *C) {
+	index := "testaliasexist_1"
+	alias := "testaliasexists"
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	// just in case
+	conn.DeleteIndex(index)
+
+	exists, err := conn.AliasExists(alias)
+	c.Assert(exists, Equals, false)
+
+	_, err = conn.CreateIndex(index, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(index)
+	time.Sleep(200 * time.Millisecond)
+
+	_, err = conn.AddAlias(alias, []string{index})
+	c.Assert(err, IsNil)
+	time.Sleep(200 * time.Millisecond)
+	defer conn.RemoveAlias(alias, []string{index})
+
+	exists, err = conn.AliasExists(alias)
+	c.Assert(exists, Equals, true)
+}
