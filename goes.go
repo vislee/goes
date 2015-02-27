@@ -528,3 +528,28 @@ func (c *Connection) DeleteMapping(typeName string, indexes []string) (Response,
 
 	return r.Run()
 }
+
+// AddAlias creates an alias to one or more indexes
+func (c *Connection) AddAlias(alias string, indexes []string) (Response, error) {
+	command := map[string]interface{}{
+		"actions": make([]map[string]interface{}, 1),
+	}
+
+	for _, index := range indexes {
+		command["actions"] = append(command["actions"].([]map[string]interface{}), map[string]interface{}{
+			"add": map[string]interface{}{
+				"index": index,
+				"alias": alias,
+			},
+		})
+	}
+
+	r := Request{
+		Conn:   c,
+		Query:  command,
+		method: "POST",
+		api:    "_aliases",
+	}
+
+	return r.Run()
+}

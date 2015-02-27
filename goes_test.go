@@ -1272,3 +1272,52 @@ func (s *GoesTestSuite) TestDeleteMapping(c *C) {
 	c.Assert(response.Acknowledged, Equals, true)
 	c.Assert(response.TimedOut, Equals, false)
 }
+
+func (s *GoesTestSuite) TestAddAlias(c *C) {
+	aliasName := "testAlias"
+	indexName := "testalias_1"
+	docType := "testDoc"
+	docId := "1234"
+	source := map[string]interface{}{
+		"user":    "foo",
+		"message": "bar",
+	}
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	defer conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	d := Document{
+		Index:  indexName,
+		Type:   docType,
+		Id:     docId,
+		Fields: source,
+	}
+
+	// Index data
+	_, err = conn.Index(d, url.Values{})
+	c.Assert(err, IsNil)
+
+	// Add alias
+	_, err = conn.AddAlias(aliasName, []string{indexName})
+	c.Assert(err, IsNil)
+
+	// Get document via alias
+	response, err := conn.Get(aliasName, docType, docId, url.Values{})
+	c.Assert(err, IsNil)
+
+	expectedResponse := Response{
+		Index:   indexName,
+		Type:    docType,
+		Id:      docId,
+		Version: 1,
+		Found:   true,
+		Source:  source,
+	}
+
+	response.Raw = nil
+	c.Assert(response, DeepEquals, expectedResponse)
+}
