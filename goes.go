@@ -529,15 +529,14 @@ func (c *Connection) DeleteMapping(typeName string, indexes []string) (Response,
 	return r.Run()
 }
 
-// AddAlias creates an alias to one or more indexes
-func (c *Connection) AddAlias(alias string, indexes []string) (Response, error) {
+func (c *Connection) modifyAlias(action string, alias string, indexes []string) (Response, error) {
 	command := map[string]interface{}{
 		"actions": make([]map[string]interface{}, 1),
 	}
 
 	for _, index := range indexes {
 		command["actions"] = append(command["actions"].([]map[string]interface{}), map[string]interface{}{
-			"add": map[string]interface{}{
+			action: map[string]interface{}{
 				"index": index,
 				"alias": alias,
 			},
@@ -552,4 +551,14 @@ func (c *Connection) AddAlias(alias string, indexes []string) (Response, error) 
 	}
 
 	return r.Run()
+}
+
+// AddAlias creates an alias to one or more indexes
+func (c *Connection) AddAlias(alias string, indexes []string) (Response, error) {
+	return c.modifyAlias("add", alias, indexes)
+}
+
+// RemoveAlias removes an alias to one or more indexes
+func (c *Connection) RemoveAlias(alias string, indexes []string) (Response, error) {
+	return c.modifyAlias("remove", alias, indexes)
 }
