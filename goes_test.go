@@ -5,7 +5,7 @@
 package goes
 
 import (
-	. "launchpad.net/gocheck"
+	. "gopkg.in/check.v1"
 	"net/http"
 	"net/url"
 	"os"
@@ -240,6 +240,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 	conn := NewConnection(ES_HOST, ES_PORT)
 
+	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, nil)
 	c.Assert(err, IsNil)
 
@@ -1271,4 +1272,119 @@ func (s *GoesTestSuite) TestDeleteMapping(c *C) {
 
 	c.Assert(response.Acknowledged, Equals, true)
 	c.Assert(response.TimedOut, Equals, false)
+}
+
+func (s *GoesTestSuite) TestAddAlias(c *C) {
+	aliasName := "testAlias"
+	indexName := "testalias_1"
+	docType := "testDoc"
+	docId := "1234"
+	source := map[string]interface{}{
+		"user":    "foo",
+		"message": "bar",
+	}
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	defer conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	d := Document{
+		Index:  indexName,
+		Type:   docType,
+		Id:     docId,
+		Fields: source,
+	}
+
+	// Index data
+	_, err = conn.Index(d, url.Values{})
+	c.Assert(err, IsNil)
+
+	// Add alias
+	_, err = conn.AddAlias(aliasName, []string{indexName})
+	c.Assert(err, IsNil)
+
+	// Get document via alias
+	response, err := conn.Get(aliasName, docType, docId, url.Values{})
+	c.Assert(err, IsNil)
+
+	expectedResponse := Response{
+		Index:   indexName,
+		Type:    docType,
+		Id:      docId,
+		Version: 1,
+		Found:   true,
+		Source:  source,
+	}
+
+	response.Raw = nil
+	c.Assert(response, DeepEquals, expectedResponse)
+}
+
+func (s *GoesTestSuite) TestRemoveAlias(c *C) {
+	aliasName := "testAlias"
+	indexName := "testalias_1"
+	docType := "testDoc"
+	docId := "1234"
+	source := map[string]interface{}{
+		"user":    "foo",
+		"message": "bar",
+	}
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	defer conn.DeleteIndex(indexName)
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
+
+	d := Document{
+		Index:  indexName,
+		Type:   docType,
+		Id:     docId,
+		Fields: source,
+	}
+
+	// Index data
+	_, err = conn.Index(d, url.Values{})
+	c.Assert(err, IsNil)
+
+	// Add alias
+	_, err = conn.AddAlias(aliasName, []string{indexName})
+	c.Assert(err, IsNil)
+
+	// Remove alias
+	_, err = conn.RemoveAlias(aliasName, []string{indexName})
+	c.Assert(err, IsNil)
+
+	// Get document via alias
+	_, err = conn.Get(aliasName, docType, docId, url.Values{})
+	c.Assert(err.Error(), Equals, "[404] IndexMissingException[["+aliasName+"] missing]")
+}
+
+func (s *GoesTestSuite) TestAliasExists(c *C) {
+	index := "testaliasexist_1"
+	alias := "testaliasexists"
+
+	conn := NewConnection(ES_HOST, ES_PORT)
+	// just in case
+	conn.DeleteIndex(index)
+
+	exists, err := conn.AliasExists(alias)
+	c.Assert(exists, Equals, false)
+
+	_, err = conn.CreateIndex(index, map[string]interface{}{})
+	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(index)
+	time.Sleep(200 * time.Millisecond)
+
+	_, err = conn.AddAlias(alias, []string{index})
+	c.Assert(err, IsNil)
+	time.Sleep(200 * time.Millisecond)
+	defer conn.RemoveAlias(alias, []string{index})
+
+	exists, err = conn.AliasExists(alias)
+	c.Assert(exists, Equals, true)
 }

@@ -528,3 +528,51 @@ func (c *Connection) DeleteMapping(typeName string, indexes []string) (Response,
 
 	return r.Run()
 }
+
+func (c *Connection) modifyAlias(action string, alias string, indexes []string) (Response, error) {
+	command := map[string]interface{}{
+		"actions": make([]map[string]interface{}, 1),
+	}
+
+	for _, index := range indexes {
+		command["actions"] = append(command["actions"].([]map[string]interface{}), map[string]interface{}{
+			action: map[string]interface{}{
+				"index": index,
+				"alias": alias,
+			},
+		})
+	}
+
+	r := Request{
+		Conn:   c,
+		Query:  command,
+		method: "POST",
+		api:    "_aliases",
+	}
+
+	return r.Run()
+}
+
+// AddAlias creates an alias to one or more indexes
+func (c *Connection) AddAlias(alias string, indexes []string) (Response, error) {
+	return c.modifyAlias("add", alias, indexes)
+}
+
+// RemoveAlias removes an alias to one or more indexes
+func (c *Connection) RemoveAlias(alias string, indexes []string) (Response, error) {
+	return c.modifyAlias("remove", alias, indexes)
+}
+
+// AliasExists checks whether alias is defined on the server
+func (c *Connection) AliasExists(alias string) (bool, error) {
+
+	r := Request{
+		Conn:   c,
+		method: "HEAD",
+		api:    "_alias/" + alias,
+	}
+
+	resp, err := r.Run()
+
+	return resp.Status == 200, err
+}
