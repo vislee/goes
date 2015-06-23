@@ -4,6 +4,7 @@ go:
   - 1.1
   - 1.2
   - 1.3
+  - 1.4.2
   - tip
 
 env:
@@ -11,10 +12,14 @@ env:
     - ES_VERSION=1.0.3
     - ES_VERSION=1.1.2
     - ES_VERSION=1.2.1
+    - ES_VERSION=1.3.4
+    - ES_VERSION=1.4.4
+    - ES_VERSION=1.5.2
+    - ES_VERSION=1.6.0
 
 before_script:
   - mkdir ${HOME}/elasticsearch
-  - wget http://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz
+  - wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-{ES_VERSION}.tar.gz
   - tar -xzf elasticsearch-${ES_VERSION}.tar.gz -C ${HOME}/elasticsearch
   - ${HOME}/elasticsearch/elasticsearch-${ES_VERSION}/bin/elasticsearch >/dev/null &
 
