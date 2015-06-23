@@ -5,13 +5,14 @@
 package goes
 
 import (
-	. "gopkg.in/check.v1"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	. "gopkg.in/check.v1"
 )
 
 var (
@@ -787,6 +788,8 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 
 	// gives ES some time to do its job
 	time.Sleep(1 * time.Second)
+	_, err = conn.RefreshIndex(indexName)
+	c.Assert(err, IsNil)
 
 	response, err := conn.IndexStatus([]string{"testindexstatus"})
 	c.Assert(err, IsNil)
