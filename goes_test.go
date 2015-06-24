@@ -1159,6 +1159,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	// Now that we have an ordinary document indexed, try updating it
 	query := map[string]interface{}{
 		"script": "ctx._source.counter += count",
+		"lang":   "groovy",
 		"params": map[string]interface{}{
 			"count": 5,
 		},
@@ -1170,7 +1171,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	}
 
 	response, err = conn.Update(d, query, extraArgs)
-	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting disabled") {
+	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting") {
 		c.Skip("Scripting is disabled on server, skipping this test")
 		return
 	}
