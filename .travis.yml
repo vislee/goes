@@ -22,6 +22,7 @@ before_script:
   - wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz
   - tar -xzf elasticsearch-${ES_VERSION}.tar.gz -C ${HOME}/elasticsearch
   - "echo 'script.groovy.sandbox.enabled: true' >> ${HOME}/elasticsearch/elasticsearch-${ES_VERSION}/config/elasticsearch.yml"
+  - 'if [ "${ES_VERSION}" < "1.3" ]; then ${HOME}/elasticsearch/elasticsearch-${ES_VERSION}/bin/plugin --install lang-groovy; fi'
   - ${HOME}/elasticsearch/elasticsearch-${ES_VERSION}/bin/elasticsearch >/dev/null &
 
 install:
