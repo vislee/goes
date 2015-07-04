@@ -354,7 +354,7 @@ func (req *Request) Run() (Response, error) {
 	}
 
 	if req.method == "POST" || req.method == "PUT" {
-		newReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		newReq.Header.Set("Content-Type", "application/json")
 	}
 
 	resp, err := req.Conn.Client.Do(newReq)
