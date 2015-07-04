@@ -5,13 +5,14 @@
 package goes
 
 import (
-	. "gopkg.in/check.v1"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	. "gopkg.in/check.v1"
 )
 
 var (
@@ -787,6 +788,8 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 
 	// gives ES some time to do its job
 	time.Sleep(1 * time.Second)
+	_, err = conn.RefreshIndex(indexName)
+	c.Assert(err, IsNil)
 
 	response, err := conn.IndexStatus([]string{"testindexstatus"})
 	c.Assert(err, IsNil)
@@ -796,9 +799,11 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 
 	primarySizeInBytes := response.Indices[indexName].Index["primary_size_in_bytes"].(float64)
 	sizeInBytes := response.Indices[indexName].Index["size_in_bytes"].(float64)
+	refreshTotal := response.Indices[indexName].Refresh["total"].(float64)
 
 	c.Assert(primarySizeInBytes > 0, Equals, true)
 	c.Assert(sizeInBytes > 0, Equals, true)
+	c.Assert(refreshTotal > 0, Equals, true)
 
 	expectedIndices := map[string]IndexStatus{
 		indexName: {
@@ -824,7 +829,7 @@ func (s *GoesTestSuite) TestIndexStatus(c *C) {
 				"total_size_in_bytes":   float64(0),
 			},
 			Refresh: map[string]interface{}{
-				"total":                float64(1),
+				"total":                refreshTotal,
 				"total_time_in_millis": float64(0),
 			},
 			Flush: map[string]interface{}{
@@ -1154,6 +1159,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	// Now that we have an ordinary document indexed, try updating it
 	query := map[string]interface{}{
 		"script": "ctx._source.counter += count",
+		"lang":   "groovy",
 		"params": map[string]interface{}{
 			"count": 5,
 		},
@@ -1165,7 +1171,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	}
 
 	response, err = conn.Update(d, query, extraArgs)
-	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting disabled") {
+	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting") {
 		c.Skip("Scripting is disabled on server, skipping this test")
 		return
 	}
