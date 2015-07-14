@@ -41,7 +41,7 @@ func (c *Connection) WithClient(cl *http.Client) *Connection {
 }
 
 // CreateIndex creates a new index represented by a name and a mapping
-func (c *Connection) CreateIndex(name string, mapping map[string]interface{}) (*Response, error) {
+func (c *Connection) CreateIndex(name string, mapping interface{}) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     mapping,
@@ -196,7 +196,7 @@ func (c *Connection) BulkSend(documents []Document) (*Response, error) {
 }
 
 // Search executes a search query against an index
-func (c *Connection) Search(query map[string]interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
+func (c *Connection) Search(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -211,7 +211,7 @@ func (c *Connection) Search(query map[string]interface{}, indexList []string, ty
 }
 
 // Count executes a count query against an index, use the Count field in the response for the result
-func (c *Connection) Count(query map[string]interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
+func (c *Connection) Count(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -228,7 +228,7 @@ func (c *Connection) Count(query map[string]interface{}, indexList []string, typ
 //Query runs a query against an index using the provided http method.
 //This method can be used to execute a delete by query, just pass in "DELETE"
 //for the HTTP method.
-func (c *Connection) Query(query map[string]interface{}, indexList []string, typeList []string, httpMethod string, extraArgs url.Values) (*Response, error) {
+func (c *Connection) Query(query interface{}, indexList []string, typeList []string, httpMethod string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -243,7 +243,7 @@ func (c *Connection) Query(query map[string]interface{}, indexList []string, typ
 }
 
 // Scan starts scroll over an index
-func (c *Connection) Scan(query map[string]interface{}, indexList []string, typeList []string, timeout string, size int) (*Response, error) {
+func (c *Connection) Scan(query interface{}, indexList []string, typeList []string, timeout string, size int) (*Response, error) {
 	v := url.Values{}
 	v.Add("search_type", "scan")
 	v.Add("scroll", timeout)
@@ -354,7 +354,7 @@ func (req *Request) Run() (*Response, error) {
 	}
 
 	if req.method == "POST" || req.method == "PUT" {
-		newReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		newReq.Header.Set("Content-Type", "application/json")
 	}
 
 	resp, err := req.Conn.Client.Do(newReq)
@@ -459,7 +459,7 @@ func (b Bucket) Aggregation(name string) Aggregation {
 }
 
 // PutMapping registers a specific mapping for one or more types in one or more indexes
-func (c *Connection) PutMapping(typeName string, mapping map[string]interface{}, indexes []string) (*Response, error) {
+func (c *Connection) PutMapping(typeName string, mapping interface{}, indexes []string) (*Response, error) {
 
 	r := Request{
 		Conn:      c,
@@ -498,7 +498,7 @@ func (c *Connection) IndicesExist(indexes []string) (bool, error) {
 	return resp.Status == 200, err
 }
 
-func (c *Connection) Update(d Document, query map[string]interface{}, extraArgs url.Values) (*Response, error) {
+func (c *Connection) Update(d Document, query interface{}, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
