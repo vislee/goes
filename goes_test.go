@@ -156,7 +156,8 @@ func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
 	resp, err := conn.DeleteIndex("foobar")
 
 	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[foobar] missing]")
-	c.Assert(resp, DeepEquals, &Response{})
+	resp.Raw = nil // Don't make us have to duplicate this.
+	c.Assert(resp, DeepEquals, &Response{Status: 404, Error: "IndexMissingException[[foobar] missing]"})
 }
 
 func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
@@ -171,8 +172,10 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 	resp, err := conn.DeleteIndex(indexName)
 	c.Assert(err, IsNil)
 
-	expectedResponse := &Response{}
-	expectedResponse.Acknowledged = true
+	expectedResponse := &Response{
+		Acknowledged: true,
+		Status:       200,
+	}
 	resp.Raw = nil
 	c.Assert(resp, DeepEquals, expectedResponse)
 }
@@ -379,6 +382,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
+		Status:  201,
 		Index:   indexName,
 		Id:      docId,
 		Type:    docType,
@@ -444,6 +448,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
+		Status:  201,
 		Index:   indexName,
 		Id:      docId,
 		Type:    docType,
@@ -513,10 +518,11 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
-		Found: true,
-		Index: indexName,
-		Type:  docType,
-		Id:    docId,
+		Status: 200,
+		Found:  true,
+		Index:  indexName,
+		Type:   docType,
+		Id:     docId,
 		// XXX : even after a DELETE the version number seems to be incremented
 		Version: 2,
 	}
@@ -527,10 +533,11 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse = &Response{
-		Found: false,
-		Index: indexName,
-		Type:  docType,
-		Id:    docId,
+		Status: 404,
+		Found:  false,
+		Index:  indexName,
+		Type:   docType,
+		Id:     docId,
 		// XXX : even after a DELETE the version number seems to be incremented
 		Version: 3,
 	}
@@ -588,6 +595,7 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
+		Status:  200,
 		Found:   false,
 		Index:   "",
 		Type:    "",
@@ -633,6 +641,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
+		Status:  200,
 		Index:   indexName,
 		Type:    docType,
 		Id:      docId,
@@ -650,6 +659,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse = &Response{
+		Status:  200,
 		Index:   indexName,
 		Type:    docType,
 		Id:      docId,
@@ -1147,6 +1157,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	time.Sleep(200 * time.Millisecond)
 
 	expectedResponse := &Response{
+		Status:  201,
 		Index:   indexName,
 		Id:      docId,
 		Type:    docType,
@@ -1317,6 +1328,7 @@ func (s *GoesTestSuite) TestAddAlias(c *C) {
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
+		Status:  200,
 		Index:   indexName,
 		Type:    docType,
 		Id:      docId,
