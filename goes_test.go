@@ -156,7 +156,7 @@ func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
 	resp, err := conn.DeleteIndex("foobar")
 
 	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[foobar] missing]")
-	c.Assert(resp, DeepEquals, Response{})
+	c.Assert(resp, DeepEquals, &Response{})
 }
 
 func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
@@ -171,7 +171,7 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 	resp, err := conn.DeleteIndex(indexName)
 	c.Assert(err, IsNil)
 
-	expectedResponse := Response{}
+	expectedResponse := &Response{}
 	expectedResponse.Acknowledged = true
 	resp.Raw = nil
 	c.Assert(resp, DeepEquals, expectedResponse)
@@ -378,7 +378,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	response, err := conn.Index(d, extraArgs)
 	c.Assert(err, IsNil)
 
-	expectedResponse := Response{
+	expectedResponse := &Response{
 		Index:   indexName,
 		Id:      docId,
 		Type:    docType,
@@ -443,7 +443,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	response, err := conn.Index(d, extraArgs)
 	c.Assert(err, IsNil)
 
-	expectedResponse := Response{
+	expectedResponse := &Response{
 		Index:   indexName,
 		Id:      docId,
 		Type:    docType,
@@ -512,7 +512,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	response, err := conn.Delete(d, url.Values{})
 	c.Assert(err, IsNil)
 
-	expectedResponse := Response{
+	expectedResponse := &Response{
 		Found: true,
 		Index: indexName,
 		Type:  docType,
@@ -526,7 +526,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	response, err = conn.Delete(d, url.Values{})
 	c.Assert(err, IsNil)
 
-	expectedResponse = Response{
+	expectedResponse = &Response{
 		Found: false,
 		Index: indexName,
 		Type:  docType,
@@ -587,7 +587,7 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 
 	c.Assert(err, IsNil)
 
-	expectedResponse := Response{
+	expectedResponse := &Response{
 		Found:   false,
 		Index:   "",
 		Type:    "",
@@ -632,7 +632,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	response, err := conn.Get(indexName, docType, docId, url.Values{})
 	c.Assert(err, IsNil)
 
-	expectedResponse := Response{
+	expectedResponse := &Response{
 		Index:   indexName,
 		Type:    docType,
 		Id:      docId,
@@ -649,7 +649,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	response, err = conn.Get(indexName, docType, docId, fields)
 	c.Assert(err, IsNil)
 
-	expectedResponse = Response{
+	expectedResponse = &Response{
 		Index:   indexName,
 		Type:    docType,
 		Id:      docId,
@@ -1146,7 +1146,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	c.Assert(err, IsNil)
 	time.Sleep(200 * time.Millisecond)
 
-	expectedResponse := Response{
+	expectedResponse := &Response{
 		Index:   indexName,
 		Id:      docId,
 		Type:    docType,
@@ -1316,7 +1316,7 @@ func (s *GoesTestSuite) TestAddAlias(c *C) {
 	response, err := conn.Get(aliasName, docType, docId, url.Values{})
 	c.Assert(err, IsNil)
 
-	expectedResponse := Response{
+	expectedResponse := &Response{
 		Index:   indexName,
 		Type:    docType,
 		Id:      docId,
