@@ -329,8 +329,47 @@ func (c *Connection) Delete(d Document, extraArgs url.Values) (*Response, error)
 }
 
 // Run executes an elasticsearch Request. It converts data to Json, sends the
-// request and return the Response obtained
+// request and returns the Response obtained
 func (req *Request) Run() (*Response, error) {
+	body, statusCode, err := req.run()
+	esResp := &Response{Status: statusCode}
+
+	if err != nil {
+		return esResp, err
+	}
+
+	if req.method != "HEAD" {
+		err = json.Unmarshal(body, &esResp)
+		if err != nil {
+			return esResp, err
+		}
+		json.Unmarshal(body, &esResp.Raw)
+	}
+
+	err = json.Unmarshal(body, &esResp)
+	if err != nil {
+		return &Response{Status: statusCode}, err
+	}
+
+	if req.api == "_bulk" && esResp.Errors {
+		for _, item := range esResp.Items {
+			for _, i := range item {
+				if i.Error != "" {
+					return esResp, &SearchError{i.Error, i.Status}
+				}
+			}
+		}
+		return esResp, &SearchError{Msg: "Unknown error while bulk indexing"}
+	}
+
+	if esResp.Error != "" {
+		return esResp, &SearchError{esResp.Error, esResp.Status}
+	}
+
+	return esResp, nil
+}
+
+func (req *Request) run() ([]byte, uint64, error) {
 	postData := []byte{}
 
 	// XXX : refactor this
@@ -341,7 +380,7 @@ func (req *Request) Run() (*Response, error) {
 	} else {
 		b, err := json.Marshal(req.Query)
 		if err != nil {
-			return &Response{}, err
+			return nil, 0, err
 		}
 		postData = b
 	}
@@ -350,7 +389,7 @@ func (req *Request) Run() (*Response, error) {
 
 	newReq, err := http.NewRequest(req.method, req.Url(), reader)
 	if err != nil {
-		return &Response{}, err
+		return nil, 0, err
 	}
 
 	if req.method == "POST" || req.method == "PUT" {
@@ -359,47 +398,21 @@ func (req *Request) Run() (*Response, error) {
 
 	resp, err := req.Conn.Client.Do(newReq)
 	if err != nil {
-		return &Response{}, err
+		return nil, 0, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return &Response{}, err
+		return nil, uint64(resp.StatusCode), err
 	}
 
 	if resp.StatusCode > 201 && resp.StatusCode < 400 {
-		return &Response{}, errors.New(string(body))
+		return nil, uint64(resp.StatusCode), errors.New(string(body))
 	}
 
-	esResp := new(Response)
-	if req.method == "HEAD" {
-		esResp.Status = uint64(resp.StatusCode)
-	} else {
-		err = json.Unmarshal(body, &esResp)
-		if err != nil {
-			return &Response{}, err
-		}
-		json.Unmarshal(body, &esResp.Raw)
-	}
-
-	if req.api == "_bulk" && esResp.Errors {
-		for _, item := range esResp.Items {
-			for _, i := range item {
-				if i.Error != "" {
-					return &Response{}, &SearchError{i.Error, i.Status}
-				}
-			}
-		}
-		return &Response{}, &SearchError{Msg: "Unknown error while bulk indexing"}
-	}
-
-	if esResp.Error != "" {
-		return &Response{}, &SearchError{esResp.Error, esResp.Status}
-	}
-
-	return esResp, nil
+	return body, uint64(resp.StatusCode), nil
 }
 
 // Url builds a Request for a URL
