@@ -180,6 +180,24 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 	c.Assert(resp, DeepEquals, expectedResponse)
 }
 
+func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
+	conn := NewConnection(ES_HOST, ES_PORT)
+	indexName := "testupdateindex"
+
+	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	c.Assert(err, IsNil)
+
+	_, err := conn.UpdateIndexSettings(indexName, map[string]interface{}{
+		"index": map[string]interface{}{
+			"number_of_replicas": 0,
+		},
+	})
+	c.Assert(err, IsNil)
+
+	_, err = conn.DeleteIndex(indexName)
+	c.Assert(err, IsNil)
+}
+
 func (s *GoesTestSuite) TestRefreshIndex(c *C) {
 	conn := NewConnection(ES_HOST, ES_PORT)
 	indexName := "testrefreshindex"

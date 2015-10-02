@@ -75,6 +75,20 @@ func (c *Connection) RefreshIndex(name string) (*Response, error) {
 	return r.Run()
 }
 
+// UpdateIndexSettings updates settings for existing index represented by a name and a settings
+// as described here: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html
+func (c *Connection) UpdateIndexSettings(name string, settings map[string]interface{}) (Response, error) {
+	r := Request{
+		Conn:      c,
+		Query:     settings,
+		IndexList: []string{name},
+		method:    "PUT",
+		api:       "_settings",
+	}
+
+	return r.Run()
+}
+
 // Optimize an index represented by a name, extra args are also allowed please check:
 // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-optimize.html#indices-optimize
 func (c *Connection) Optimize(indexList []string, extraArgs url.Values) (*Response, error) {
