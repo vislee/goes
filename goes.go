@@ -77,7 +77,7 @@ func (c *Connection) RefreshIndex(name string) (*Response, error) {
 
 // UpdateIndexSettings updates settings for existing index represented by a name and a settings
 // as described here: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html
-func (c *Connection) UpdateIndexSettings(name string, settings map[string]interface{}) (Response, error) {
+func (c *Connection) UpdateIndexSettings(name string, settings interface{}) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     settings,

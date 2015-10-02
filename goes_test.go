@@ -187,7 +187,7 @@ func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
 
-	_, err := conn.UpdateIndexSettings(indexName, map[string]interface{}{
+	_, err = conn.UpdateIndexSettings(indexName, map[string]interface{}{
 		"index": map[string]interface{}{
 			"number_of_replicas": 0,
 		},
