@@ -357,10 +357,10 @@ func (req *Request) Run() (*Response, error) {
 		if err != nil {
 			return esResp, err
 		}
-		json.Unmarshal(body, &esResp.Raw)
-		if err != nil {
-			return &Response{Status: statusCode}, err
-		}
+        err = json.Unmarshal(body, &esResp.Raw)
+        if err != nil {
+            return esResp, err
+        }
 	}
 
 	if req.api == "_bulk" && esResp.Errors {
