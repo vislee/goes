@@ -102,7 +102,7 @@ func (s *GoesTestSuite) TestEsDown(c *C) {
 	}
 	_, err := r.Run()
 
-	c.Assert(err, ErrorMatches, "Get http://a.b.c.d:1234/i/_search:(.*)lookup a.b.c.d: no such host")
+	c.Assert(err, ErrorMatches, ".* no such host")
 }
 
 func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
