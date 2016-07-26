@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/belogik/goes"
+	"github.com/OwnLocal/goes"
 )
 
 var (
