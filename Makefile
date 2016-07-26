@@ -1,10 +1,10 @@
 help:
 	@echo "Available targets:"
 	@echo "- test: run tests"
-	@echo "- installdependencies: installs dependencies declared in dependencies.txt"
+	@echo "- deps: installs dependencies with glide"
 
-installdependencies:
-	cat dependencies.txt | xargs go get
+deps:
+	glide up
 
-test: installdependencies
+test: deps
 	go test -i && go test

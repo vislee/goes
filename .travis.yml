@@ -1,15 +1,12 @@
 language: go
 
 go:
-  - 1.1
-  - 1.2
-  - 1.3
-  - 1.4.2
-  - 1.4.3
-  - 1.5
-  - 1.5.1
+  - 1.5.4
+  - 1.6.3
 
 env:
+  global:
+    - GO15VENDOREXPERIMENT=1
   matrix:
     - ES_VERSION=1.0.3 GROOVY_VER=2.0.0
     - ES_VERSION=1.1.2 GROOVY_VER=2.0.0
@@ -27,9 +24,10 @@ before_script:
   - "echo 'script.groovy.sandbox.enabled: true' >> ${HOME}/elasticsearch/elasticsearch-${ES_VERSION}/config/elasticsearch.yml"
   - 'if [[ "${ES_VERSION}" < "1.3" ]]; then ${HOME}/elasticsearch/elasticsearch-${ES_VERSION}/bin/plugin --install elasticsearch/elasticsearch-lang-groovy/${GROOVY_VER}; fi'
   - ${HOME}/elasticsearch/elasticsearch-${ES_VERSION}/bin/elasticsearch >/dev/null &
+  - sleep 10 # Wait for ES to start up
 
 install:
-  - go get gopkg.in/check.v1
+  - go get github.com/Masterminds/glide
 
 script:
   - make test
