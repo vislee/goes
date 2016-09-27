@@ -27,21 +27,22 @@ func (err *SearchError) Error() string {
 	return fmt.Sprintf("[%d] %s", err.StatusCode, err.Msg)
 }
 
-// NewConnection initiates a new Connection to an elasticsearch server
+// NewClient initiates a new client for an elasticsearch server
 //
 // This function is pretty useless for now but might be useful in a near future
 // if wee need more features like connection pooling or load balancing.
-func NewConnection(host string, port string) *Connection {
-	return &Connection{host, port, http.DefaultClient}
+func NewClient(host string, port string) *Client {
+	return &Client{host, port, http.DefaultClient}
 }
 
-func (c *Connection) WithClient(cl *http.Client) *Connection {
+// WithHTTPClient sets the http.Client to be used with the connection. Returns the original client.
+func (c *Client) WithHTTPClient(cl *http.Client) *Client {
 	c.Client = cl
 	return c
 }
 
 // CreateIndex creates a new index represented by a name and a mapping
-func (c *Connection) CreateIndex(name string, mapping interface{}) (*Response, error) {
+func (c *Client) CreateIndex(name string, mapping interface{}) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     mapping,
@@ -53,7 +54,7 @@ func (c *Connection) CreateIndex(name string, mapping interface{}) (*Response, e
 }
 
 // DeleteIndex deletes an index represented by a name
-func (c *Connection) DeleteIndex(name string) (*Response, error) {
+func (c *Client) DeleteIndex(name string) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: []string{name},
@@ -64,7 +65,7 @@ func (c *Connection) DeleteIndex(name string) (*Response, error) {
 }
 
 // RefreshIndex refreshes an index represented by a name
-func (c *Connection) RefreshIndex(name string) (*Response, error) {
+func (c *Client) RefreshIndex(name string) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: []string{name},
@@ -77,7 +78,7 @@ func (c *Connection) RefreshIndex(name string) (*Response, error) {
 
 // UpdateIndexSettings updates settings for existing index represented by a name and a settings
 // as described here: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html
-func (c *Connection) UpdateIndexSettings(name string, settings interface{}) (*Response, error) {
+func (c *Client) UpdateIndexSettings(name string, settings interface{}) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     settings,
@@ -91,7 +92,7 @@ func (c *Connection) UpdateIndexSettings(name string, settings interface{}) (*Re
 
 // Optimize an index represented by a name, extra args are also allowed please check:
 // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-optimize.html#indices-optimize
-func (c *Connection) Optimize(indexList []string, extraArgs url.Values) (*Response, error) {
+func (c *Client) Optimize(indexList []string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: indexList,
@@ -104,7 +105,7 @@ func (c *Connection) Optimize(indexList []string, extraArgs url.Values) (*Respon
 }
 
 // Stats fetches statistics (_stats) for the current elasticsearch server
-func (c *Connection) Stats(indexList []string, extraArgs url.Values) (*Response, error) {
+func (c *Client) Stats(indexList []string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: indexList,
@@ -118,7 +119,7 @@ func (c *Connection) Stats(indexList []string, extraArgs url.Values) (*Response,
 
 // IndexStatus fetches the status (_status) for the indices defined in
 // indexList. Use _all in indexList to get stats for all indices
-func (c *Connection) IndexStatus(indexList []string) (*Response, error) {
+func (c *Client) IndexStatus(indexList []string) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: indexList,
@@ -130,7 +131,7 @@ func (c *Connection) IndexStatus(indexList []string) (*Response, error) {
 }
 
 // Bulk adds multiple documents in bulk mode
-func (c *Connection) BulkSend(documents []Document) (*Response, error) {
+func (c *Client) BulkSend(documents []Document) (*Response, error) {
 	// We do not generate a traditional JSON here (often a one liner)
 	// Elasticsearch expects one line of JSON per line (EOL = \n)
 	// plus an extra \n at the very end of the document
@@ -210,7 +211,7 @@ func (c *Connection) BulkSend(documents []Document) (*Response, error) {
 }
 
 // Search executes a search query against an index
-func (c *Connection) Search(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
+func (c *Client) Search(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -225,7 +226,7 @@ func (c *Connection) Search(query interface{}, indexList []string, typeList []st
 }
 
 // Count executes a count query against an index, use the Count field in the response for the result
-func (c *Connection) Count(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
+func (c *Client) Count(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -242,7 +243,7 @@ func (c *Connection) Count(query interface{}, indexList []string, typeList []str
 //Query runs a query against an index using the provided http method.
 //This method can be used to execute a delete by query, just pass in "DELETE"
 //for the HTTP method.
-func (c *Connection) Query(query interface{}, indexList []string, typeList []string, httpMethod string, extraArgs url.Values) (*Response, error) {
+func (c *Client) Query(query interface{}, indexList []string, typeList []string, httpMethod string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -257,7 +258,7 @@ func (c *Connection) Query(query interface{}, indexList []string, typeList []str
 }
 
 // Scan starts scroll over an index
-func (c *Connection) Scan(query interface{}, indexList []string, typeList []string, timeout string, size int) (*Response, error) {
+func (c *Client) Scan(query interface{}, indexList []string, typeList []string, timeout string, size int) (*Response, error) {
 	v := url.Values{}
 	v.Add("search_type", "scan")
 	v.Add("scroll", timeout)
@@ -277,7 +278,7 @@ func (c *Connection) Scan(query interface{}, indexList []string, typeList []stri
 }
 
 // Scroll fetches data by scroll id
-func (c *Connection) Scroll(scrollId string, timeout string) (*Response, error) {
+func (c *Client) Scroll(scrollId string, timeout string) (*Response, error) {
 	v := url.Values{}
 	v.Add("scroll", timeout)
 
@@ -293,7 +294,7 @@ func (c *Connection) Scroll(scrollId string, timeout string) (*Response, error) 
 }
 
 // Get a typed document by its id
-func (c *Connection) Get(index string, documentType string, id string, extraArgs url.Values) (*Response, error) {
+func (c *Client) Get(index string, documentType string, id string, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: []string{index},
@@ -308,7 +309,7 @@ func (c *Connection) Get(index string, documentType string, id string, extraArgs
 // Index indexes a Document
 // The extraArgs is a list of url.Values that you can send to elasticsearch as
 // URL arguments, for example, to control routing, ttl, version, op_type, etc.
-func (c *Connection) Index(d Document, extraArgs url.Values) (*Response, error) {
+func (c *Client) Index(d Document, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     d.Fields,
@@ -329,7 +330,7 @@ func (c *Connection) Index(d Document, extraArgs url.Values) (*Response, error) 
 // Delete deletes a Document d
 // The extraArgs is a list of url.Values that you can send to elasticsearch as
 // URL arguments, for example, to control routing.
-func (c *Connection) Delete(d Document, extraArgs url.Values) (*Response, error) {
+func (c *Client) Delete(d Document, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: []string{d.Index.(string)},
@@ -484,7 +485,7 @@ func (b Bucket) Aggregation(name string) Aggregation {
 }
 
 // PutMapping registers a specific mapping for one or more types in one or more indexes
-func (c *Connection) PutMapping(typeName string, mapping interface{}, indexes []string) (*Response, error) {
+func (c *Client) PutMapping(typeName string, mapping interface{}, indexes []string) (*Response, error) {
 
 	r := Request{
 		Conn:      c,
@@ -497,7 +498,7 @@ func (c *Connection) PutMapping(typeName string, mapping interface{}, indexes []
 	return r.Run()
 }
 
-func (c *Connection) GetMapping(types []string, indexes []string) (*Response, error) {
+func (c *Client) GetMapping(types []string, indexes []string) (*Response, error) {
 
 	r := Request{
 		Conn:      c,
@@ -510,7 +511,7 @@ func (c *Connection) GetMapping(types []string, indexes []string) (*Response, er
 }
 
 // IndicesExist checks whether index (or indices) exist on the server
-func (c *Connection) IndicesExist(indexes []string) (bool, error) {
+func (c *Client) IndicesExist(indexes []string) (bool, error) {
 
 	r := Request{
 		Conn:      c,
@@ -523,7 +524,7 @@ func (c *Connection) IndicesExist(indexes []string) (bool, error) {
 	return resp.Status == 200, err
 }
 
-func (c *Connection) Update(d Document, query interface{}, extraArgs url.Values) (*Response, error) {
+func (c *Client) Update(d Document, query interface{}, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		Query:     query,
@@ -542,7 +543,7 @@ func (c *Connection) Update(d Document, query interface{}, extraArgs url.Values)
 }
 
 // DeleteMapping deletes a mapping along with all data in the type
-func (c *Connection) DeleteMapping(typeName string, indexes []string) (*Response, error) {
+func (c *Client) DeleteMapping(typeName string, indexes []string) (*Response, error) {
 
 	r := Request{
 		Conn:      c,
@@ -554,7 +555,7 @@ func (c *Connection) DeleteMapping(typeName string, indexes []string) (*Response
 	return r.Run()
 }
 
-func (c *Connection) modifyAlias(action string, alias string, indexes []string) (*Response, error) {
+func (c *Client) modifyAlias(action string, alias string, indexes []string) (*Response, error) {
 	command := map[string]interface{}{
 		"actions": make([]map[string]interface{}, 1),
 	}
@@ -579,17 +580,17 @@ func (c *Connection) modifyAlias(action string, alias string, indexes []string) 
 }
 
 // AddAlias creates an alias to one or more indexes
-func (c *Connection) AddAlias(alias string, indexes []string) (*Response, error) {
+func (c *Client) AddAlias(alias string, indexes []string) (*Response, error) {
 	return c.modifyAlias("add", alias, indexes)
 }
 
 // RemoveAlias removes an alias to one or more indexes
-func (c *Connection) RemoveAlias(alias string, indexes []string) (*Response, error) {
+func (c *Client) RemoveAlias(alias string, indexes []string) (*Response, error) {
 	return c.modifyAlias("remove", alias, indexes)
 }
 
 // AliasExists checks whether alias is defined on the server
-func (c *Connection) AliasExists(alias string) (bool, error) {
+func (c *Client) AliasExists(alias string) (bool, error) {
 
 	r := Request{
 		Conn:   c,

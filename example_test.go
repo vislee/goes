@@ -19,7 +19,7 @@ var (
 	ES_PORT = "9200"
 )
 
-func getConnection() (conn *goes.Connection) {
+func getConnection() (conn *goes.Client) {
 	h := os.Getenv("TEST_ELASTICSEARCH_HOST")
 	if h == "" {
 		h = ES_HOST
@@ -30,7 +30,7 @@ func getConnection() (conn *goes.Connection) {
 		p = ES_PORT
 	}
 
-	conn = goes.NewConnection(h, p)
+	conn = goes.NewClient(h, p)
 
 	return
 }
@@ -177,7 +177,7 @@ func ExampleConnectionOverrideHttpClient() {
 		Transport: tr,
 	}
 	conn := getConnection()
-	conn.WithClient(cl)
+	conn.WithHTTPClient(cl)
 
 	fmt.Printf("%v\n", conn.Client)
 }

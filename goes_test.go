@@ -39,12 +39,12 @@ func (s *GoesTestSuite) SetUpTest(c *C) {
 	}
 }
 
-func (s *GoesTestSuite) TestNewConnection(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
-	c.Assert(conn, DeepEquals, &Connection{ES_HOST, ES_PORT, http.DefaultClient})
+func (s *GoesTestSuite) TestNewClient(c *C) {
+	conn := NewClient(ES_HOST, ES_PORT)
+	c.Assert(conn, DeepEquals, &Client{ES_HOST, ES_PORT, http.DefaultClient})
 }
 
-func (s *GoesTestSuite) TestWithClient(c *C) {
+func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
 	tr := &http.Transport{
 		DisableCompression:    true,
 		ResponseHeaderTimeout: 1 * time.Second,
@@ -52,15 +52,15 @@ func (s *GoesTestSuite) TestWithClient(c *C) {
 	cl := &http.Client{
 		Transport: tr,
 	}
-	conn := NewConnection(ES_HOST, ES_PORT).WithClient(cl)
+	conn := NewClient(ES_HOST, ES_PORT).WithHTTPClient(cl)
 
-	c.Assert(conn, DeepEquals, &Connection{ES_HOST, ES_PORT, cl})
+	c.Assert(conn, DeepEquals, &Client{ES_HOST, ES_PORT, cl})
 	c.Assert(conn.Client.Transport.(*http.Transport).DisableCompression, Equals, true)
 	c.Assert(conn.Client.Transport.(*http.Transport).ResponseHeaderTimeout, Equals, 1*time.Second)
 }
 
 func (s *GoesTestSuite) TestUrl(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 
 	r := Request{
 		Conn:      conn,
@@ -89,7 +89,7 @@ func (s *GoesTestSuite) TestUrl(c *C) {
 }
 
 func (s *GoesTestSuite) TestEsDown(c *C) {
-	conn := NewConnection("a.b.c.d", "1234")
+	conn := NewClient("a.b.c.d", "1234")
 
 	var query = map[string]interface{}{"query": "foo"}
 
@@ -106,7 +106,7 @@ func (s *GoesTestSuite) TestEsDown(c *C) {
 }
 
 func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 
 	var query = map[string]interface{}{"query": "foo"}
 
@@ -125,7 +125,7 @@ func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
 func (s *GoesTestSuite) TestCreateIndex(c *C) {
 	indexName := "testcreateindexgoes"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	defer conn.DeleteIndex(indexName)
 
 	mapping := map[string]interface{}{
@@ -152,7 +152,7 @@ func (s *GoesTestSuite) TestCreateIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	resp, err := conn.DeleteIndex("foobar")
 
 	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[foobar] missing]")
@@ -161,7 +161,7 @@ func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 
 	indexName := "testdeleteindexexistingindex"
 
@@ -181,7 +181,7 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	indexName := "testupdateindex"
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -199,7 +199,7 @@ func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
 }
 
 func (s *GoesTestSuite) TestRefreshIndex(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	indexName := "testrefreshindex"
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -213,7 +213,7 @@ func (s *GoesTestSuite) TestRefreshIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestOptimize(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	indexName := "testoptimize"
 
 	conn.DeleteIndex(indexName)
@@ -260,7 +260,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		},
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, nil)
@@ -349,7 +349,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 }
 
 func (s *GoesTestSuite) TestStats(c *C) {
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	indexName := "teststats"
 
 	conn.DeleteIndex(indexName)
@@ -373,7 +373,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	docType := "tweet"
 	docId := "1234"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -416,7 +416,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsNotInMapOrStruct(c *C) {
 	docType := "tweet"
 	docId := "1234"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -442,7 +442,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	docType := "tweet"
 	docId := "1234"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -481,7 +481,7 @@ func (s *GoesTestSuite) TestIndexIdNotDefined(c *C) {
 	indexName := "testindexidnotdefined"
 	docType := "tweet"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -512,7 +512,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	docType := "tweet"
 	docId := "1234"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -568,7 +568,7 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	docType := "tweet"
 	docId := "1234"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -638,7 +638,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 		"f2": "foo",
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -701,7 +701,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 		"message": "bar",
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -761,7 +761,7 @@ func (s *GoesTestSuite) TestCount(c *C) {
 		"message": "bar",
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -800,7 +800,7 @@ func (s *GoesTestSuite) TestCount(c *C) {
 
 func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	indexName := "testindexstatus"
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	conn.DeleteIndex(indexName)
 
 	mapping := map[string]interface{}{
@@ -909,7 +909,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 		},
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 
 	mapping := map[string]interface{}{
 		"settings": map[string]interface{}{
@@ -1011,7 +1011,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 		},
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 
 	mapping := map[string]interface{}{
 		"settings": map[string]interface{}{
@@ -1084,7 +1084,7 @@ func (s *GoesTestSuite) TestPutMapping(c *C) {
 	indexName := "testputmapping"
 	docType := "tweet"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1125,7 +1125,7 @@ func (s *GoesTestSuite) TestPutMapping(c *C) {
 func (s *GoesTestSuite) TestIndicesExist(c *C) {
 	indices := []string{"testindicesexist"}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indices[0])
 
@@ -1150,7 +1150,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	docType := "tweet"
 	docId := "1234"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1231,7 +1231,7 @@ func (s *GoesTestSuite) TestGetMapping(c *C) {
 	indexName := "testmapping"
 	docType := "tweet"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1267,7 +1267,7 @@ func (s *GoesTestSuite) TestDeleteMapping(c *C) {
 	indexName := "testdeletemapping"
 	docType := "tweet"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1319,7 +1319,7 @@ func (s *GoesTestSuite) TestAddAlias(c *C) {
 		"message": "bar",
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	defer conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -1369,7 +1369,7 @@ func (s *GoesTestSuite) TestRemoveAlias(c *C) {
 		"message": "bar",
 	}
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	defer conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -1404,7 +1404,7 @@ func (s *GoesTestSuite) TestAliasExists(c *C) {
 	index := "testaliasexist_1"
 	alias := "testaliasexists"
 
-	conn := NewConnection(ES_HOST, ES_PORT)
+	conn := NewClient(ES_HOST, ES_PORT)
 	// just in case
 	conn.DeleteIndex(index)
 
