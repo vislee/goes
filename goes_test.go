@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	ES_HOST = "localhost"
-	ES_PORT = "9200"
+	ESHost = "localhost"
+	ESPort = "9200"
 )
 
 // Hook up gocheck into the gotest runner.
@@ -30,18 +30,18 @@ var _ = Suite(&GoesTestSuite{})
 func (s *GoesTestSuite) SetUpTest(c *C) {
 	h := os.Getenv("TEST_ELASTICSEARCH_HOST")
 	if h != "" {
-		ES_HOST = h
+		ESHost = h
 	}
 
 	p := os.Getenv("TEST_ELASTICSEARCH_PORT")
 	if p != "" {
-		ES_PORT = p
+		ESPort = p
 	}
 }
 
 func (s *GoesTestSuite) TestNewClient(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
-	c.Assert(conn, DeepEquals, &Client{ES_HOST, ES_PORT, http.DefaultClient})
+	conn := NewClient(ESHost, ESPort)
+	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, http.DefaultClient})
 }
 
 func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
@@ -52,15 +52,15 @@ func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
 	cl := &http.Client{
 		Transport: tr,
 	}
-	conn := NewClient(ES_HOST, ES_PORT).WithHTTPClient(cl)
+	conn := NewClient(ESHost, ESPort).WithHTTPClient(cl)
 
-	c.Assert(conn, DeepEquals, &Client{ES_HOST, ES_PORT, cl})
+	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, cl})
 	c.Assert(conn.Client.Transport.(*http.Transport).DisableCompression, Equals, true)
 	c.Assert(conn.Client.Transport.(*http.Transport).ResponseHeaderTimeout, Equals, 1*time.Second)
 }
 
 func (s *GoesTestSuite) TestUrl(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 
 	r := Request{
 		Conn:      conn,
@@ -71,21 +71,21 @@ func (s *GoesTestSuite) TestUrl(c *C) {
 		api:       "_search",
 	}
 
-	c.Assert(r.Url(), Equals, "http://"+ES_HOST+":"+ES_PORT+"/i/_search")
+	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/i/_search")
 
 	r.IndexList = []string{"a", "b"}
-	c.Assert(r.Url(), Equals, "http://"+ES_HOST+":"+ES_PORT+"/a,b/_search")
+	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/_search")
 
 	r.TypeList = []string{"c", "d"}
-	c.Assert(r.Url(), Equals, "http://"+ES_HOST+":"+ES_PORT+"/a,b/c,d/_search")
+	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/c,d/_search")
 
 	r.ExtraArgs = make(url.Values, 1)
 	r.ExtraArgs.Set("version", "1")
-	c.Assert(r.Url(), Equals, "http://"+ES_HOST+":"+ES_PORT+"/a,b/c,d/_search?version=1")
+	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/c,d/_search?version=1")
 
 	r.id = "1234"
 	r.api = ""
-	c.Assert(r.Url(), Equals, "http://"+ES_HOST+":"+ES_PORT+"/a,b/c,d/1234/?version=1")
+	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/c,d/1234/?version=1")
 }
 
 func (s *GoesTestSuite) TestEsDown(c *C) {
@@ -106,7 +106,7 @@ func (s *GoesTestSuite) TestEsDown(c *C) {
 }
 
 func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 
 	var query = map[string]interface{}{"query": "foo"}
 
@@ -125,7 +125,7 @@ func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
 func (s *GoesTestSuite) TestCreateIndex(c *C) {
 	indexName := "testcreateindexgoes"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	defer conn.DeleteIndex(indexName)
 
 	mapping := map[string]interface{}{
@@ -152,7 +152,7 @@ func (s *GoesTestSuite) TestCreateIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	resp, err := conn.DeleteIndex("foobar")
 
 	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[foobar] missing]")
@@ -161,7 +161,7 @@ func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 
 	indexName := "testdeleteindexexistingindex"
 
@@ -181,7 +181,7 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	indexName := "testupdateindex"
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -199,7 +199,7 @@ func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
 }
 
 func (s *GoesTestSuite) TestRefreshIndex(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	indexName := "testrefreshindex"
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -213,7 +213,7 @@ func (s *GoesTestSuite) TestRefreshIndex(c *C) {
 }
 
 func (s *GoesTestSuite) TestOptimize(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	indexName := "testoptimize"
 
 	conn.DeleteIndex(indexName)
@@ -238,10 +238,10 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 	tweets := []Document{
 		{
-			Id:          "123",
+			ID:          "123",
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "foo",
 				"message": "some foo message",
@@ -249,10 +249,10 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		},
 
 		{
-			Id:          nil,
+			ID:          nil,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "bar",
 				"message": "some bar message",
@@ -260,7 +260,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 		},
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, nil)
@@ -268,13 +268,13 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 	response, err := conn.BulkSend(tweets)
 	i := Item{
-		Id:      "123",
+		ID:      "123",
 		Type:    docType,
 		Version: 1,
 		Index:   indexName,
 		Status:  201, //201 for indexing ( https://issues.apache.org/jira/browse/CONNECTORS-634 )
 	}
-	c.Assert(response.Items[0][BULK_COMMAND_INDEX], Equals, i)
+	c.Assert(response.Items[0][BulkCommandIndex], Equals, i)
 	c.Assert(err, IsNil)
 
 	_, err = conn.RefreshIndex(indexName)
@@ -292,17 +292,17 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	var expectedTotal uint64 = 2
 	c.Assert(searchResults.Hits.Total, Equals, expectedTotal)
 
-	extraDocId := ""
+	extraDocID := ""
 	checked := 0
 	for _, hit := range searchResults.Hits.Hits {
 		if hit.Source["user"] == "foo" {
-			c.Assert(hit.Id, Equals, "123")
+			c.Assert(hit.ID, Equals, "123")
 			checked++
 		}
 
 		if hit.Source["user"] == "bar" {
-			c.Assert(len(hit.Id) > 0, Equals, true)
-			extraDocId = hit.Id
+			c.Assert(len(hit.ID) > 0, Equals, true)
+			extraDocID = hit.ID
 			checked++
 		}
 	}
@@ -310,28 +310,28 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 
 	docToDelete := []Document{
 		{
-			Id:          "123",
+			ID:          "123",
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_DELETE,
+			BulkCommand: BulkCommandDelete,
 		},
 		{
-			Id:          extraDocId,
+			ID:          extraDocID,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_DELETE,
+			BulkCommand: BulkCommandDelete,
 		},
 	}
 
 	response, err = conn.BulkSend(docToDelete)
 	i = Item{
-		Id:      "123",
+		ID:      "123",
 		Type:    docType,
 		Version: 2,
 		Index:   indexName,
 		Status:  200, //200 for updates
 	}
-	c.Assert(response.Items[0][BULK_COMMAND_DELETE], Equals, i)
+	c.Assert(response.Items[0][BulkCommandDelete], Equals, i)
 
 	c.Assert(err, IsNil)
 
@@ -349,7 +349,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 }
 
 func (s *GoesTestSuite) TestStats(c *C) {
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	indexName := "teststats"
 
 	conn.DeleteIndex(indexName)
@@ -371,9 +371,9 @@ func (s *GoesTestSuite) TestStats(c *C) {
 func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	indexName := "testindexwithfieldsinstruct"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -384,7 +384,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	d := Document{
 		Index: indexName,
 		Type:  docType,
-		Id:    docId,
+		ID:    docID,
 		Fields: struct {
 			user    string
 			message string
@@ -402,7 +402,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	expectedResponse := &Response{
 		Status:  201,
 		Index:   indexName,
-		Id:      docId,
+		ID:      docID,
 		Type:    docType,
 		Version: 1,
 	}
@@ -414,9 +414,9 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 func (s *GoesTestSuite) TestIndexWithFieldsNotInMapOrStruct(c *C) {
 	indexName := "testindexwithfieldsnotinmaporstruct"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -427,7 +427,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsNotInMapOrStruct(c *C) {
 	d := Document{
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		Fields: "test",
 	}
 
@@ -440,9 +440,9 @@ func (s *GoesTestSuite) TestIndexWithFieldsNotInMapOrStruct(c *C) {
 func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	indexName := "testindexiddefined"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -453,7 +453,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	d := Document{
 		Index: indexName,
 		Type:  docType,
-		Id:    docId,
+		ID:    docID,
 		Fields: map[string]interface{}{
 			"user":    "foo",
 			"message": "bar",
@@ -468,7 +468,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	expectedResponse := &Response{
 		Status:  201,
 		Index:   indexName,
-		Id:      docId,
+		ID:      docID,
 		Type:    docType,
 		Version: 1,
 	}
@@ -481,7 +481,7 @@ func (s *GoesTestSuite) TestIndexIdNotDefined(c *C) {
 	indexName := "testindexidnotdefined"
 	docType := "tweet"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -504,15 +504,15 @@ func (s *GoesTestSuite) TestIndexIdNotDefined(c *C) {
 	c.Assert(response.Index, Equals, indexName)
 	c.Assert(response.Type, Equals, docType)
 	c.Assert(response.Version, Equals, 1)
-	c.Assert(response.Id != "", Equals, true)
+	c.Assert(response.ID != "", Equals, true)
 }
 
 func (s *GoesTestSuite) TestDelete(c *C) {
 	indexName := "testdelete"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -523,7 +523,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 	d := Document{
 		Index: indexName,
 		Type:  docType,
-		Id:    docId,
+		ID:    docID,
 		Fields: map[string]interface{}{
 			"user": "foo",
 		},
@@ -540,7 +540,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		Found:  true,
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		// XXX : even after a DELETE the version number seems to be incremented
 		Version: 2,
 	}
@@ -555,7 +555,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		Found:  false,
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		// XXX : even after a DELETE the version number seems to be incremented
 		Version: 3,
 	}
@@ -566,9 +566,9 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	indexName := "testdeletebyquery"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -579,7 +579,7 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	d := Document{
 		Index: indexName,
 		Type:  docType,
-		Id:    docId,
+		ID:    docID,
 		Fields: map[string]interface{}{
 			"user": "foo",
 		},
@@ -617,7 +617,7 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 		Found:   false,
 		Index:   "",
 		Type:    "",
-		Id:      "",
+		ID:      "",
 		Version: 0,
 	}
 	response.Raw = nil
@@ -632,13 +632,13 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 func (s *GoesTestSuite) TestGet(c *C) {
 	indexName := "testget"
 	docType := "tweet"
-	docId := "111"
+	docID := "111"
 	source := map[string]interface{}{
 		"f1": "foo",
 		"f2": "foo",
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -648,21 +648,21 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	d := Document{
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		Fields: source,
 	}
 
 	_, err = conn.Index(d, url.Values{})
 	c.Assert(err, IsNil)
 
-	response, err := conn.Get(indexName, docType, docId, url.Values{})
+	response, err := conn.Get(indexName, docType, docID, url.Values{})
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
 		Status:  200,
 		Index:   indexName,
 		Type:    docType,
-		Id:      docId,
+		ID:      docID,
 		Version: 1,
 		Found:   true,
 		Source:  source,
@@ -673,14 +673,14 @@ func (s *GoesTestSuite) TestGet(c *C) {
 
 	fields := make(url.Values, 1)
 	fields.Set("fields", "f1")
-	response, err = conn.Get(indexName, docType, docId, fields)
+	response, err = conn.Get(indexName, docType, docID, fields)
 	c.Assert(err, IsNil)
 
 	expectedResponse = &Response{
 		Status:  200,
 		Index:   indexName,
 		Type:    docType,
-		Id:      docId,
+		ID:      docID,
 		Version: 1,
 		Found:   true,
 		Fields: map[string]interface{}{
@@ -695,13 +695,13 @@ func (s *GoesTestSuite) TestGet(c *C) {
 func (s *GoesTestSuite) TestSearch(c *C) {
 	indexName := "testsearch"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 	source := map[string]interface{}{
 		"user":    "foo",
 		"message": "bar",
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -711,7 +711,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 	d := Document{
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		Fields: source,
 	}
 
@@ -733,7 +733,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 			},
 		},
 	}
-	response, err := conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
+	response, _ := conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
 
 	expectedHits := Hits{
 		Total:    1,
@@ -742,7 +742,7 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 			{
 				Index:  indexName,
 				Type:   docType,
-				Id:     docId,
+				ID:     docID,
 				Score:  1.0,
 				Source: source,
 			},
@@ -755,13 +755,13 @@ func (s *GoesTestSuite) TestSearch(c *C) {
 func (s *GoesTestSuite) TestCount(c *C) {
 	indexName := "testcount"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 	source := map[string]interface{}{
 		"user":    "foo",
 		"message": "bar",
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -771,7 +771,7 @@ func (s *GoesTestSuite) TestCount(c *C) {
 	d := Document{
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		Fields: source,
 	}
 
@@ -793,14 +793,14 @@ func (s *GoesTestSuite) TestCount(c *C) {
 			},
 		},
 	}
-	response, err := conn.Count(query, []string{indexName}, []string{docType}, url.Values{})
+	response, _ := conn.Count(query, []string{indexName}, []string{docType}, url.Values{})
 
 	c.Assert(response.Count, Equals, 1)
 }
 
 func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	indexName := "testindexstatus"
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	conn.DeleteIndex(indexName)
 
 	mapping := map[string]interface{}{
@@ -876,10 +876,10 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 
 	tweets := []Document{
 		{
-			Id:          nil,
+			ID:          nil,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "foo",
 				"message": "some foo message",
@@ -887,10 +887,10 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 		},
 
 		{
-			Id:          nil,
+			ID:          nil,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "bar",
 				"message": "some bar message",
@@ -898,10 +898,10 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 		},
 
 		{
-			Id:          nil,
+			ID:          nil,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "foo",
 				"message": "another foo message",
@@ -909,7 +909,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 		},
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 
 	mapping := map[string]interface{}{
 		"settings": map[string]interface{}{
@@ -943,30 +943,30 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 
 	scan, err := conn.Scan(query, []string{indexName}, []string{docType}, "1m", 1)
 	c.Assert(err, IsNil)
-	c.Assert(len(scan.ScrollId) > 0, Equals, true)
+	c.Assert(len(scan.ScrollID) > 0, Equals, true)
 
-	searchResults, err := conn.Scroll(scan.ScrollId, "1m")
+	searchResults, err := conn.Scroll(scan.ScrollID, "1m")
 	c.Assert(err, IsNil)
 
 	// some data in first chunk
 	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
-	c.Assert(len(searchResults.ScrollId) > 0, Equals, true)
+	c.Assert(len(searchResults.ScrollID) > 0, Equals, true)
 	c.Assert(len(searchResults.Hits.Hits), Equals, 1)
 
-	searchResults, err = conn.Scroll(searchResults.ScrollId, "1m")
+	searchResults, err = conn.Scroll(searchResults.ScrollID, "1m")
 	c.Assert(err, IsNil)
 
 	// more data in second chunk
 	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
-	c.Assert(len(searchResults.ScrollId) > 0, Equals, true)
+	c.Assert(len(searchResults.ScrollID) > 0, Equals, true)
 	c.Assert(len(searchResults.Hits.Hits), Equals, 1)
 
-	searchResults, err = conn.Scroll(searchResults.ScrollId, "1m")
+	searchResults, err = conn.Scroll(searchResults.ScrollID, "1m")
 	c.Assert(err, IsNil)
 
 	// nothing in third chunk
 	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
-	c.Assert(len(searchResults.ScrollId) > 0, Equals, true)
+	c.Assert(len(searchResults.ScrollID) > 0, Equals, true)
 	c.Assert(len(searchResults.Hits.Hits), Equals, 0)
 }
 
@@ -976,10 +976,10 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 
 	tweets := []Document{
 		{
-			Id:          nil,
+			ID:          nil,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "foo",
 				"message": "some foo message",
@@ -988,10 +988,10 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 		},
 
 		{
-			Id:          nil,
+			ID:          nil,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "bar",
 				"message": "some bar message",
@@ -1000,10 +1000,10 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 		},
 
 		{
-			Id:          nil,
+			ID:          nil,
 			Index:       indexName,
 			Type:        docType,
-			BulkCommand: BULK_COMMAND_INDEX,
+			BulkCommand: BulkCommandIndex,
 			Fields: map[string]interface{}{
 				"user":    "foo",
 				"message": "another foo message",
@@ -1011,7 +1011,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 		},
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 
 	mapping := map[string]interface{}{
 		"settings": map[string]interface{}{
@@ -1056,7 +1056,7 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 		},
 	}
 
-	resp, err := conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
+	resp, _ := conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
 
 	user, ok := resp.Aggregations["user"]
 	c.Assert(ok, Equals, true)
@@ -1084,7 +1084,7 @@ func (s *GoesTestSuite) TestPutMapping(c *C) {
 	indexName := "testputmapping"
 	docType := "tweet"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1125,7 +1125,7 @@ func (s *GoesTestSuite) TestPutMapping(c *C) {
 func (s *GoesTestSuite) TestIndicesExist(c *C) {
 	indices := []string{"testindicesexist"}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indices[0])
 
@@ -1137,20 +1137,20 @@ func (s *GoesTestSuite) TestIndicesExist(c *C) {
 	defer conn.DeleteIndex(indices[0])
 	time.Sleep(200 * time.Millisecond)
 
-	exists, err = conn.IndicesExist(indices)
+	exists, _ = conn.IndicesExist(indices)
 	c.Assert(exists, Equals, true)
 
 	indices = append(indices, "nonexistent")
-	exists, err = conn.IndicesExist(indices)
+	exists, _ = conn.IndicesExist(indices)
 	c.Assert(exists, Equals, false)
 }
 
 func (s *GoesTestSuite) TestUpdate(c *C) {
 	indexName := "testupdate"
 	docType := "tweet"
-	docId := "1234"
+	docID := "1234"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1161,7 +1161,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	d := Document{
 		Index: indexName,
 		Type:  docType,
-		Id:    docId,
+		ID:    docID,
 		Fields: map[string]interface{}{
 			"user":    "foo",
 			"message": "bar",
@@ -1177,7 +1177,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	expectedResponse := &Response{
 		Status:  201,
 		Index:   indexName,
-		Id:      docId,
+		ID:      docID,
 		Type:    docType,
 		Version: 1,
 	}
@@ -1208,20 +1208,20 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 
 	c.Assert(err, Equals, nil)
 
-	response, err = conn.Get(indexName, docType, docId, url.Values{})
+	response, err = conn.Get(indexName, docType, docID, url.Values{})
 	c.Assert(err, Equals, nil)
 	c.Assert(response.Source["counter"], Equals, float64(6))
 	c.Assert(response.Source["user"], Equals, "foo")
 	c.Assert(response.Source["message"], Equals, "bar")
 
 	// Test another document, non-existent
-	docId = "555"
-	d.Id = docId
+	docID = "555"
+	d.ID = docID
 	response, err = conn.Update(d, query, extraArgs)
 	c.Assert(err, Equals, nil)
 	time.Sleep(200 * time.Millisecond)
 
-	response, err = conn.Get(indexName, docType, docId, url.Values{})
+	response, err = conn.Get(indexName, docType, docID, url.Values{})
 	c.Assert(err, Equals, nil)
 	c.Assert(response.Source["user"], Equals, "admin")
 	c.Assert(response.Source["message"], Equals, "candybar")
@@ -1231,7 +1231,7 @@ func (s *GoesTestSuite) TestGetMapping(c *C) {
 	indexName := "testmapping"
 	docType := "tweet"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1267,7 +1267,7 @@ func (s *GoesTestSuite) TestDeleteMapping(c *C) {
 	indexName := "testdeletemapping"
 	docType := "tweet"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -1313,13 +1313,13 @@ func (s *GoesTestSuite) TestAddAlias(c *C) {
 	aliasName := "testAlias"
 	indexName := "testalias_1"
 	docType := "testDoc"
-	docId := "1234"
+	docID := "1234"
 	source := map[string]interface{}{
 		"user":    "foo",
 		"message": "bar",
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	defer conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -1329,7 +1329,7 @@ func (s *GoesTestSuite) TestAddAlias(c *C) {
 	d := Document{
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		Fields: source,
 	}
 
@@ -1342,14 +1342,14 @@ func (s *GoesTestSuite) TestAddAlias(c *C) {
 	c.Assert(err, IsNil)
 
 	// Get document via alias
-	response, err := conn.Get(aliasName, docType, docId, url.Values{})
+	response, err := conn.Get(aliasName, docType, docID, url.Values{})
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
 		Status:  200,
 		Index:   indexName,
 		Type:    docType,
-		Id:      docId,
+		ID:      docID,
 		Version: 1,
 		Found:   true,
 		Source:  source,
@@ -1363,13 +1363,13 @@ func (s *GoesTestSuite) TestRemoveAlias(c *C) {
 	aliasName := "testAlias"
 	indexName := "testalias_1"
 	docType := "testDoc"
-	docId := "1234"
+	docID := "1234"
 	source := map[string]interface{}{
 		"user":    "foo",
 		"message": "bar",
 	}
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	defer conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -1379,7 +1379,7 @@ func (s *GoesTestSuite) TestRemoveAlias(c *C) {
 	d := Document{
 		Index:  indexName,
 		Type:   docType,
-		Id:     docId,
+		ID:     docID,
 		Fields: source,
 	}
 
@@ -1396,7 +1396,7 @@ func (s *GoesTestSuite) TestRemoveAlias(c *C) {
 	c.Assert(err, IsNil)
 
 	// Get document via alias
-	_, err = conn.Get(aliasName, docType, docId, url.Values{})
+	_, err = conn.Get(aliasName, docType, docID, url.Values{})
 	c.Assert(err.Error(), Equals, "[404] IndexMissingException[["+aliasName+"] missing]")
 }
 
@@ -1404,7 +1404,7 @@ func (s *GoesTestSuite) TestAliasExists(c *C) {
 	index := "testaliasexist_1"
 	alias := "testaliasexists"
 
-	conn := NewClient(ES_HOST, ES_PORT)
+	conn := NewClient(ESHost, ESPort)
 	// just in case
 	conn.DeleteIndex(index)
 
@@ -1421,6 +1421,6 @@ func (s *GoesTestSuite) TestAliasExists(c *C) {
 	time.Sleep(200 * time.Millisecond)
 	defer conn.RemoveAlias(alias, []string{index})
 
-	exists, err = conn.AliasExists(alias)
+	exists, _ = conn.AliasExists(alias)
 	c.Assert(exists, Equals, true)
 }

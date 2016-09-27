@@ -19,8 +19,10 @@ import (
 )
 
 const (
-	BULK_COMMAND_INDEX  = "index"
-	BULK_COMMAND_DELETE = "delete"
+	// BulkCommandIndex specifies a bulk doc should be indexed
+	BulkCommandIndex = "index"
+	// BulkCommandDelete specifies a bulk doc should be deleted
+	BulkCommandDelete = "delete"
 )
 
 func (err *SearchError) Error() string {
@@ -130,7 +132,7 @@ func (c *Client) IndexStatus(indexList []string) (*Response, error) {
 	return r.Run()
 }
 
-// Bulk adds multiple documents in bulk mode
+// BulkSend bulk adds multiple documents in bulk mode
 func (c *Client) BulkSend(documents []Document) (*Response, error) {
 	// We do not generate a traditional JSON here (often a one liner)
 	// Elasticsearch expects one line of JSON per line (EOL = \n)
@@ -158,7 +160,7 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 			doc.BulkCommand: map[string]interface{}{
 				"_index": doc.Index,
 				"_type":  doc.Type,
-				"_id":    doc.Id,
+				"_id":    doc.ID,
 			},
 		})
 
@@ -278,7 +280,7 @@ func (c *Client) Scan(query interface{}, indexList []string, typeList []string, 
 }
 
 // Scroll fetches data by scroll id
-func (c *Client) Scroll(scrollId string, timeout string) (*Response, error) {
+func (c *Client) Scroll(scrollID string, timeout string) (*Response, error) {
 	v := url.Values{}
 	v.Add("scroll", timeout)
 
@@ -287,7 +289,7 @@ func (c *Client) Scroll(scrollId string, timeout string) (*Response, error) {
 		method:    "POST",
 		api:       "_search/scroll",
 		ExtraArgs: v,
-		Body:      []byte(scrollId),
+		Body:      []byte(scrollID),
 	}
 
 	return r.Run()
@@ -319,9 +321,9 @@ func (c *Client) Index(d Document, extraArgs url.Values) (*Response, error) {
 		method:    "POST",
 	}
 
-	if d.Id != nil {
+	if d.ID != nil {
 		r.method = "PUT"
-		r.id = d.Id.(string)
+		r.id = d.ID.(string)
 	}
 
 	return r.Run()
@@ -337,7 +339,7 @@ func (c *Client) Delete(d Document, extraArgs url.Values) (*Response, error) {
 		TypeList:  []string{d.Type},
 		ExtraArgs: extraArgs,
 		method:    "DELETE",
-		id:        d.Id.(string),
+		id:        d.ID.(string),
 	}
 
 	return r.Run()
@@ -400,7 +402,7 @@ func (req *Request) run() ([]byte, uint64, error) {
 
 	reader := bytes.NewReader(postData)
 
-	newReq, err := http.NewRequest(req.method, req.Url(), reader)
+	newReq, err := http.NewRequest(req.method, req.URL(), reader)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -428,26 +430,26 @@ func (req *Request) run() ([]byte, uint64, error) {
 	return body, uint64(resp.StatusCode), nil
 }
 
-// Url builds a Request for a URL
-func (r *Request) Url() string {
-	path := "/" + strings.Join(r.IndexList, ",")
+// URL builds a Request for a URL
+func (req *Request) URL() string {
+	path := "/" + strings.Join(req.IndexList, ",")
 
-	if len(r.TypeList) > 0 {
-		path += "/" + strings.Join(r.TypeList, ",")
+	if len(req.TypeList) > 0 {
+		path += "/" + strings.Join(req.TypeList, ",")
 	}
 
 	// XXX : for indexing documents using the normal (non bulk) API
-	if len(r.id) > 0 {
-		path += "/" + r.id
+	if len(req.id) > 0 {
+		path += "/" + req.id
 	}
 
-	path += "/" + r.api
+	path += "/" + req.api
 
 	u := url.URL{
 		Scheme:   "http",
-		Host:     fmt.Sprintf("%s:%s", r.Conn.Host, r.Conn.Port),
+		Host:     fmt.Sprintf("%s:%s", req.Conn.Host, req.Conn.Port),
 		Path:     path,
-		RawQuery: r.ExtraArgs.Encode(),
+		RawQuery: req.ExtraArgs.Encode(),
 	}
 
 	return u.String()
@@ -479,9 +481,8 @@ func (b Bucket) DocCount() uint64 {
 func (b Bucket) Aggregation(name string) Aggregation {
 	if agg, ok := b[name]; ok {
 		return agg.(map[string]interface{})
-	} else {
-		return Aggregation{}
 	}
+	return Aggregation{}
 }
 
 // PutMapping registers a specific mapping for one or more types in one or more indexes
@@ -498,6 +499,7 @@ func (c *Client) PutMapping(typeName string, mapping interface{}, indexes []stri
 	return r.Run()
 }
 
+// GetMapping returns the mappings for the specified types
 func (c *Client) GetMapping(types []string, indexes []string) (*Response, error) {
 
 	r := Request{
@@ -524,6 +526,7 @@ func (c *Client) IndicesExist(indexes []string) (bool, error) {
 	return resp.Status == 200, err
 }
 
+// Update updates the specified document using the _update endpoint
 func (c *Client) Update(d Document, query interface{}, extraArgs url.Values) (*Response, error) {
 	r := Request{
 		Conn:      c,
@@ -535,8 +538,8 @@ func (c *Client) Update(d Document, query interface{}, extraArgs url.Values) (*R
 		api:       "_update",
 	}
 
-	if d.Id != nil {
-		r.id = d.Id.(string)
+	if d.ID != nil {
+		r.id = d.ID.(string)
 	}
 
 	return r.Run()

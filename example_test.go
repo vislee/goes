@@ -19,7 +19,7 @@ var (
 	ES_PORT = "9200"
 )
 
-func getConnection() (conn *goes.Client) {
+func getClient() (conn *goes.Client) {
 	h := os.Getenv("TEST_ELASTICSEARCH_HOST")
 	if h == "" {
 		h = ES_HOST
@@ -35,8 +35,8 @@ func getConnection() (conn *goes.Client) {
 	return
 }
 
-func ExampleConnection_CreateIndex() {
-	conn := getConnection()
+func ExampleClient_CreateIndex() {
+	conn := getClient()
 
 	mapping := map[string]interface{}{
 		"settings": map[string]interface{}{
@@ -64,8 +64,8 @@ func ExampleConnection_CreateIndex() {
 	fmt.Printf("%s", resp)
 }
 
-func ExampleConnection_DeleteIndex() {
-	conn := getConnection()
+func ExampleClient_DeleteIndex() {
+	conn := getClient()
 	resp, err := conn.DeleteIndex("yourinde")
 
 	if err != nil {
@@ -75,8 +75,8 @@ func ExampleConnection_DeleteIndex() {
 	fmt.Printf("%s", resp)
 }
 
-func ExampleConnection_RefreshIndex() {
-	conn := getConnection()
+func ExampleClient_RefreshIndex() {
+	conn := getClient()
 	resp, err := conn.RefreshIndex("yourindex")
 
 	if err != nil {
@@ -86,8 +86,8 @@ func ExampleConnection_RefreshIndex() {
 	fmt.Printf("%s", resp)
 }
 
-func ExampleConnection_Search() {
-	conn := getConnection()
+func ExampleClient_Search() {
+	conn := getClient()
 
 	var query = map[string]interface{}{
 		"query": map[string]interface{}{
@@ -123,8 +123,8 @@ func ExampleConnection_Search() {
 	fmt.Printf("%s", searchResults)
 }
 
-func ExampleConnection_Index() {
-	conn := getConnection()
+func ExampleClient_Index() {
+	conn := getClient()
 
 	d := goes.Document{
 		Index: "twitter",
@@ -147,15 +147,15 @@ func ExampleConnection_Index() {
 	fmt.Printf("%s", response)
 }
 
-func ExampleConnection_Delete() {
-	conn := getConnection()
+func ExampleClient_Delete() {
+	conn := getClient()
 
 	//[create index, index document ...]
 
 	d := goes.Document{
 		Index: "twitter",
 		Type:  "tweet",
-		Id:    "1",
+		ID:    "1",
 		Fields: map[string]interface{}{
 			"user": "foo",
 		},
@@ -169,14 +169,14 @@ func ExampleConnection_Delete() {
 	fmt.Printf("%s", response)
 }
 
-func ExampleConnectionOverrideHttpClient() {
+func ExampleClient_WithHTTPClient() {
 	tr := &http.Transport{
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
 	cl := &http.Client{
 		Transport: tr,
 	}
-	conn := getConnection()
+	conn := getClient()
 	conn.WithHTTPClient(cl)
 
 	fmt.Printf("%v\n", conn.Client)

@@ -66,7 +66,7 @@ type Response struct {
 	Shards       Shard `json:"_shards"`
 	Hits         Hits
 	Index        string `json:"_index"`
-	Id           string `json:"_id"`
+	ID           string `json:"_id"`
 	Type         string `json:"_type"`
 	Version      int    `json:"_version"`
 	Found        bool
@@ -86,7 +86,7 @@ type Response struct {
 	Indices map[string]IndexStatus
 
 	// Scroll id for iteration
-	ScrollId string `json:"_scroll_id"`
+	ScrollID string `json:"_scroll_id"`
 
 	Aggregations map[string]Aggregation `json:"aggregations,omitempty"`
 
@@ -104,7 +104,7 @@ type Document struct {
 	// XXX : interface as we can support nil values
 	Index       interface{}
 	Type        string
-	Id          interface{}
+	ID          interface{}
 	BulkCommand string
 	Fields      interface{}
 }
@@ -112,7 +112,7 @@ type Document struct {
 // Item holds an item from the "items" field in a _bulk response
 type Item struct {
 	Type    string `json:"_type"`
-	Id      string `json:"_id"`
+	ID      string `json:"_id"`
 	Index   string `json:"_index"`
 	Version int    `json:"_version"`
 	Error   string `json:"error"`
@@ -126,10 +126,12 @@ type All struct {
 	Primaries map[string]StatPrimary `json:"primaries"`
 }
 
+// StatIndex contains stats for a specific index
 type StatIndex struct {
 	Primaries map[string]StatPrimary `json:"primaries"`
 }
 
+// StatPrimary contains stats for a primary index
 type StatPrimary struct {
 	// primary/docs:
 	Count   int
@@ -147,7 +149,7 @@ type Shard struct {
 type Hit struct {
 	Index     string                 `json:"_index"`
 	Type      string                 `json:"_type"`
-	Id        string                 `json:"_id"`
+	ID        string                 `json:"_id"`
 	Score     float64                `json:"_score"`
 	Source    map[string]interface{} `json:"_source"`
 	Highlight map[string]interface{} `json:"highlight"`
@@ -162,6 +164,7 @@ type Hits struct {
 	Hits     []Hit
 }
 
+// SearchError holds errors returned from an ES search
 type SearchError struct {
 	Msg        string
 	StatusCode uint64
