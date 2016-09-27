@@ -49,7 +49,7 @@ func (c *Client) CreateIndex(name string, mapping interface{}) (*Response, error
 		Conn:      c,
 		Query:     mapping,
 		IndexList: []string{name},
-		method:    "PUT",
+		Method:    "PUT",
 	}
 
 	return r.Run()
@@ -60,7 +60,7 @@ func (c *Client) DeleteIndex(name string) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: []string{name},
-		method:    "DELETE",
+		Method:    "DELETE",
 	}
 
 	return r.Run()
@@ -71,8 +71,8 @@ func (c *Client) RefreshIndex(name string) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: []string{name},
-		method:    "POST",
-		api:       "_refresh",
+		Method:    "POST",
+		API:       "_refresh",
 	}
 
 	return r.Run()
@@ -85,8 +85,8 @@ func (c *Client) UpdateIndexSettings(name string, settings interface{}) (*Respon
 		Conn:      c,
 		Query:     settings,
 		IndexList: []string{name},
-		method:    "PUT",
-		api:       "_settings",
+		Method:    "PUT",
+		API:       "_settings",
 	}
 
 	return r.Run()
@@ -99,8 +99,8 @@ func (c *Client) Optimize(indexList []string, extraArgs url.Values) (*Response, 
 		Conn:      c,
 		IndexList: indexList,
 		ExtraArgs: extraArgs,
-		method:    "POST",
-		api:       "_optimize",
+		Method:    "POST",
+		API:       "_optimize",
 	}
 
 	return r.Run()
@@ -112,8 +112,8 @@ func (c *Client) Stats(indexList []string, extraArgs url.Values) (*Response, err
 		Conn:      c,
 		IndexList: indexList,
 		ExtraArgs: extraArgs,
-		method:    "GET",
-		api:       "_stats",
+		Method:    "GET",
+		API:       "_stats",
 	}
 
 	return r.Run()
@@ -125,8 +125,8 @@ func (c *Client) IndexStatus(indexList []string) (*Response, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: indexList,
-		method:    "GET",
-		api:       "_status",
+		Method:    "GET",
+		API:       "_status",
 	}
 
 	return r.Run()
@@ -204,9 +204,9 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 
 	r := Request{
 		Conn:     c,
-		method:   "POST",
-		api:      "_bulk",
-		bulkData: bytes.Join(bulkData, []byte("\n")),
+		Method:   "POST",
+		API:      "_bulk",
+		BulkData: bytes.Join(bulkData, []byte("\n")),
 	}
 
 	return r.Run()
@@ -219,8 +219,8 @@ func (c *Client) Search(query interface{}, indexList []string, typeList []string
 		Query:     query,
 		IndexList: indexList,
 		TypeList:  typeList,
-		method:    "POST",
-		api:       "_search",
+		Method:    "POST",
+		API:       "_search",
 		ExtraArgs: extraArgs,
 	}
 
@@ -234,8 +234,8 @@ func (c *Client) Count(query interface{}, indexList []string, typeList []string,
 		Query:     query,
 		IndexList: indexList,
 		TypeList:  typeList,
-		method:    "POST",
-		api:       "_count",
+		Method:    "POST",
+		API:       "_count",
 		ExtraArgs: extraArgs,
 	}
 
@@ -251,8 +251,8 @@ func (c *Client) Query(query interface{}, indexList []string, typeList []string,
 		Query:     query,
 		IndexList: indexList,
 		TypeList:  typeList,
-		method:    httpMethod,
-		api:       "_query",
+		Method:    httpMethod,
+		API:       "_query",
 		ExtraArgs: extraArgs,
 	}
 
@@ -271,8 +271,8 @@ func (c *Client) Scan(query interface{}, indexList []string, typeList []string, 
 		Query:     query,
 		IndexList: indexList,
 		TypeList:  typeList,
-		method:    "POST",
-		api:       "_search",
+		Method:    "POST",
+		API:       "_search",
 		ExtraArgs: v,
 	}
 
@@ -286,8 +286,8 @@ func (c *Client) Scroll(scrollID string, timeout string) (*Response, error) {
 
 	r := Request{
 		Conn:      c,
-		method:    "POST",
-		api:       "_search/scroll",
+		Method:    "POST",
+		API:       "_search/scroll",
 		ExtraArgs: v,
 		Body:      []byte(scrollID),
 	}
@@ -300,8 +300,8 @@ func (c *Client) Get(index string, documentType string, id string, extraArgs url
 	r := Request{
 		Conn:      c,
 		IndexList: []string{index},
-		method:    "GET",
-		api:       documentType + "/" + id,
+		Method:    "GET",
+		API:       documentType + "/" + id,
 		ExtraArgs: extraArgs,
 	}
 
@@ -318,12 +318,12 @@ func (c *Client) Index(d Document, extraArgs url.Values) (*Response, error) {
 		IndexList: []string{d.Index.(string)},
 		TypeList:  []string{d.Type},
 		ExtraArgs: extraArgs,
-		method:    "POST",
+		Method:    "POST",
 	}
 
 	if d.ID != nil {
-		r.method = "PUT"
-		r.id = d.ID.(string)
+		r.Method = "PUT"
+		r.ID = d.ID.(string)
 	}
 
 	return r.Run()
@@ -338,8 +338,8 @@ func (c *Client) Delete(d Document, extraArgs url.Values) (*Response, error) {
 		IndexList: []string{d.Index.(string)},
 		TypeList:  []string{d.Type},
 		ExtraArgs: extraArgs,
-		method:    "DELETE",
-		id:        d.ID.(string),
+		Method:    "DELETE",
+		ID:        d.ID.(string),
 	}
 
 	return r.Run()
@@ -355,7 +355,7 @@ func (req *Request) Run() (*Response, error) {
 		return esResp, err
 	}
 
-	if req.method != "HEAD" {
+	if req.Method != "HEAD" {
 		err = json.Unmarshal(body, &esResp)
 		if err != nil {
 			return esResp, err
@@ -366,7 +366,7 @@ func (req *Request) Run() (*Response, error) {
 		}
 	}
 
-	if req.api == "_bulk" && esResp.Errors {
+	if req.API == "_bulk" && esResp.Errors {
 		for _, item := range esResp.Items {
 			for _, i := range item {
 				if i.Error != "" {
@@ -390,8 +390,8 @@ func (req *Request) run() ([]byte, uint64, error) {
 	// XXX : refactor this
 	if len(req.Body) > 0 {
 		postData = req.Body
-	} else if req.api == "_bulk" {
-		postData = req.bulkData
+	} else if req.API == "_bulk" {
+		postData = req.BulkData
 	} else {
 		b, err := json.Marshal(req.Query)
 		if err != nil {
@@ -402,12 +402,12 @@ func (req *Request) run() ([]byte, uint64, error) {
 
 	reader := bytes.NewReader(postData)
 
-	newReq, err := http.NewRequest(req.method, req.URL(), reader)
+	newReq, err := http.NewRequest(req.Method, req.URL(), reader)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	if req.method == "POST" || req.method == "PUT" {
+	if req.Method == "POST" || req.Method == "PUT" {
 		newReq.Header.Set("Content-Type", "application/json")
 	}
 
@@ -439,11 +439,11 @@ func (req *Request) URL() string {
 	}
 
 	// XXX : for indexing documents using the normal (non bulk) API
-	if len(req.id) > 0 {
-		path += "/" + req.id
+	if len(req.ID) > 0 {
+		path += "/" + req.ID
 	}
 
-	path += "/" + req.api
+	path += "/" + req.API
 
 	u := url.URL{
 		Scheme:   "http",
@@ -492,8 +492,8 @@ func (c *Client) PutMapping(typeName string, mapping interface{}, indexes []stri
 		Conn:      c,
 		Query:     mapping,
 		IndexList: indexes,
-		method:    "PUT",
-		api:       "_mappings/" + typeName,
+		Method:    "PUT",
+		API:       "_mappings/" + typeName,
 	}
 
 	return r.Run()
@@ -505,8 +505,8 @@ func (c *Client) GetMapping(types []string, indexes []string) (*Response, error)
 	r := Request{
 		Conn:      c,
 		IndexList: indexes,
-		method:    "GET",
-		api:       "_mapping/" + strings.Join(types, ","),
+		Method:    "GET",
+		API:       "_mapping/" + strings.Join(types, ","),
 	}
 
 	return r.Run()
@@ -518,7 +518,7 @@ func (c *Client) IndicesExist(indexes []string) (bool, error) {
 	r := Request{
 		Conn:      c,
 		IndexList: indexes,
-		method:    "HEAD",
+		Method:    "HEAD",
 	}
 
 	resp, err := r.Run()
@@ -534,12 +534,12 @@ func (c *Client) Update(d Document, query interface{}, extraArgs url.Values) (*R
 		IndexList: []string{d.Index.(string)},
 		TypeList:  []string{d.Type},
 		ExtraArgs: extraArgs,
-		method:    "POST",
-		api:       "_update",
+		Method:    "POST",
+		API:       "_update",
 	}
 
 	if d.ID != nil {
-		r.id = d.ID.(string)
+		r.ID = d.ID.(string)
 	}
 
 	return r.Run()
@@ -551,8 +551,8 @@ func (c *Client) DeleteMapping(typeName string, indexes []string) (*Response, er
 	r := Request{
 		Conn:      c,
 		IndexList: indexes,
-		method:    "DELETE",
-		api:       "_mappings/" + typeName,
+		Method:    "DELETE",
+		API:       "_mappings/" + typeName,
 	}
 
 	return r.Run()
@@ -575,8 +575,8 @@ func (c *Client) modifyAlias(action string, alias string, indexes []string) (*Re
 	r := Request{
 		Conn:   c,
 		Query:  command,
-		method: "POST",
-		api:    "_aliases",
+		Method: "POST",
+		API:    "_aliases",
 	}
 
 	return r.Run()
@@ -597,8 +597,8 @@ func (c *Client) AliasExists(alias string) (bool, error) {
 
 	r := Request{
 		Conn:   c,
-		method: "HEAD",
-		api:    "_alias/" + alias,
+		Method: "HEAD",
+		API:    "_alias/" + alias,
 	}
 
 	resp, err := r.Run()
