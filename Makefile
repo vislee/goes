@@ -5,7 +5,7 @@ help:
 	@echo "- watch: watch for changes and re-run tests"
 
 deps:
-	glide install
+	glide install && go install github.com/onsi/ginkgo/ginkgo
 
 test: deps
 	ginkgo -race -randomizeAllSpecs -r -skipPackage vendor -progress .
