@@ -27,4 +27,5 @@ install:
   - go get github.com/Masterminds/glide
 
 script:
+  - pwd
   - make test
