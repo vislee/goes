@@ -4,10 +4,7 @@
 
 package goes
 
-import (
-	"net/http"
-	"net/url"
-)
+import "net/http"
 
 // Client represents a connection to elasticsearch
 type Client struct {
@@ -20,39 +17,6 @@ type Client struct {
 	// Client is the http client used to make requests, allowing settings things
 	// such as timeouts etc
 	Client *http.Client
-}
-
-// Request holds a single request to elasticsearch
-type Request struct {
-	// Which connection will be used
-	Conn *Client
-
-	// A search query
-	Query interface{}
-
-	// Which index to search into
-	IndexList []string
-
-	// Which type to search into
-	TypeList []string
-
-	// HTTP Method to user (GET, POST ...)
-	Method string
-
-	// Which api keyword (_search, _bulk, etc) to use
-	API string
-
-	// Bulk data
-	BulkData []byte
-
-	// Request body
-	Body []byte
-
-	// A list of extra URL arguments
-	ExtraArgs url.Values
-
-	// Used for the id field when indexing a document
-	ID string
 }
 
 // Response holds an elasticsearch response

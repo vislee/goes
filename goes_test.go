@@ -60,10 +60,9 @@ func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
 }
 
 func (s *GoesTestSuite) TestUrl(c *C) {
-	conn := NewClient(ESHost, ESPort)
+	//conn := NewClient(ESHost, ESPort)
 
 	r := Request{
-		Conn:      conn,
 		Query:     "q",
 		IndexList: []string{"i"},
 		TypeList:  []string{},
@@ -71,21 +70,21 @@ func (s *GoesTestSuite) TestUrl(c *C) {
 		API:       "_search",
 	}
 
-	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/i/_search")
+	c.Assert(r.URL().String(), Equals, "/i/_search")
 
 	r.IndexList = []string{"a", "b"}
-	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/_search")
+	c.Assert(r.URL().String(), Equals, "/a,b/_search")
 
 	r.TypeList = []string{"c", "d"}
-	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/c,d/_search")
+	c.Assert(r.URL().String(), Equals, "/a,b/c,d/_search")
 
 	r.ExtraArgs = make(url.Values, 1)
 	r.ExtraArgs.Set("version", "1")
-	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/c,d/_search?version=1")
+	c.Assert(r.URL().String(), Equals, "/a,b/c,d/_search?version=1")
 
 	r.ID = "1234"
 	r.API = ""
-	c.Assert(r.URL(), Equals, "http://"+ESHost+":"+ESPort+"/a,b/c,d/1234/?version=1")
+	c.Assert(r.URL().String(), Equals, "/a,b/c,d/1234/?version=1")
 }
 
 func (s *GoesTestSuite) TestEsDown(c *C) {
@@ -94,13 +93,12 @@ func (s *GoesTestSuite) TestEsDown(c *C) {
 	var query = map[string]interface{}{"query": "foo"}
 
 	r := Request{
-		Conn:      conn,
 		Query:     query,
 		IndexList: []string{"i"},
 		Method:    "GET",
 		API:       "_search",
 	}
-	_, err := r.Run()
+	_, err := conn.Do(&r)
 
 	c.Assert(err, ErrorMatches, ".* no such host")
 }
@@ -111,13 +109,12 @@ func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
 	var query = map[string]interface{}{"query": "foo"}
 
 	r := Request{
-		Conn:      conn,
 		Query:     query,
 		IndexList: []string{"i"},
 		Method:    "GET",
 		API:       "_search",
 	}
-	_, err := r.Run()
+	_, err := conn.Do(&r)
 
 	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[i] missing]")
 }
