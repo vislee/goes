@@ -5,7 +5,7 @@ help:
 	@echo "- watch: watch for changes and re-run tests"
 
 deps:
-	glide install	&& mkdir -p vendor/bin && go build -o vendor/bin/ginkgo github.com/onsi/ginkgo/ginkgo
+	glide install	&& mkdir -p vendor/bin && go build -o vendor/bin/ginkgo ./vendor/github.com/onsi/ginkgo/ginkgo
 
 
 test: deps
