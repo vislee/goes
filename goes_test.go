@@ -60,8 +60,6 @@ func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
 }
 
 func (s *GoesTestSuite) TestUrl(c *C) {
-	//conn := NewClient(ESHost, ESPort)
-
 	r := Request{
 		Query:     "q",
 		IndexList: []string{"i"},
