@@ -25,7 +25,6 @@ before_script:
 
 install:
   - go get github.com/Masterminds/glide
-  - go get github.com/onsi/ginkgo/ginkgo
 
 script:
   - make test
