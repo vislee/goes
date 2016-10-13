@@ -47,7 +47,10 @@ type Request struct {
 
 // URL builds a URL for a Request
 func (req *Request) URL() *url.URL {
-	path := "/" + strings.Join(req.IndexList, ",")
+	var path string
+	if len(req.IndexList) > 0 {
+		path = "/" + strings.Join(req.IndexList, ",")
+	}
 
 	if len(req.TypeList) > 0 {
 		path += "/" + strings.Join(req.TypeList, ",")
