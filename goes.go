@@ -516,6 +516,13 @@ func (c *Client) Do(r Requester) (*Response, error) {
 		}
 	}
 
+	if len(esResp.RawError) > 0 && esResp.RawError[0] == '"' {
+		json.Unmarshal(esResp.RawError, &esResp.Error)
+	} else {
+		esResp.Error = string(esResp.RawError)
+	}
+	esResp.RawError = nil
+
 	if esResp.Error != "" {
 		return esResp, &SearchError{esResp.Error, esResp.Status}
 	}

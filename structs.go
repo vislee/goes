@@ -4,7 +4,10 @@
 
 package goes
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 // Client represents a connection to elasticsearch
 type Client struct {
@@ -23,6 +26,7 @@ type Client struct {
 type Response struct {
 	Acknowledged bool
 	Error        string
+	RawError     json.RawMessage `json:"error"`
 	Errors       bool
 	Status       uint64
 	Took         uint64
