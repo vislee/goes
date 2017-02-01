@@ -145,7 +145,7 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 
 	// len(documents) * 2 : action + optional_sources
 	// + 1 : room for the trailing \n
-	bulkData := make([][]byte, len(documents)*2+1)
+	bulkData := make([][]byte, 0, len(documents)*2+1)
 	i := 0
 
 	for _, doc := range documents {
@@ -161,7 +161,7 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 			return &Response{}, err
 		}
 
-		bulkData[i] = action
+		bulkData = append(bulkData, action)
 		i++
 
 		if doc.Fields != nil {
@@ -187,13 +187,13 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 				return &Response{}, err
 			}
 
-			bulkData[i] = sources
+			bulkData = append(bulkData, sources)
 			i++
 		}
 	}
 
 	// forces an extra trailing \n absolutely necessary for elasticsearch
-	bulkData[len(bulkData)-1] = []byte(nil)
+	bulkData = append(bulkData, []byte(nil))
 
 	r := Request{
 		Method:   "POST",
@@ -445,7 +445,7 @@ func (c *Client) DeleteMapping(typeName string, indexes []string) (*Response, er
 
 func (c *Client) modifyAlias(action string, alias string, indexes []string) (*Response, error) {
 	command := map[string]interface{}{
-		"actions": make([]map[string]interface{}, 1),
+		"actions": make([]map[string]interface{}, 0, 1),
 	}
 
 	for _, index := range indexes {
