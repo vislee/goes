@@ -540,6 +540,8 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		Version: 2,
 	}
 	response.Raw = nil
+	response.Shards.Total = 0
+	response.Shards.Successful = 0
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	response, err = conn.Delete(d, url.Values{})
@@ -616,6 +618,8 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 		Version: 0,
 	}
 	response.Raw = nil
+	response.Shards.Total = 0
+	response.Shards.Successful = 0
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	//should be 0 docs after delete by query
@@ -1178,6 +1182,8 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	}
 
 	response.Raw = nil
+	response.Shards.Successful = 0
+	response.Shards.Total = 0
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	// Now that we have an ordinary document indexed, try updating it
