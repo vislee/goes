@@ -1,6 +1,12 @@
-hash: 7e39b5bd354c3f0770ca3a9d28a74a0523695d18effa1e540f006b325defcfe7
-updated: 2016-07-26T14:50:32.597335795-05:00
+hash: 02db47097959405b1a7e0e1e583c6fbb11c7236c450264909a4e9ac690ef4d47
+updated: 2016-09-27T11:54:53.427061181-05:00
 imports: []
 testImports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
+- name: github.com/onsi/ginkgo
+  version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
+  subpackages:
+  - ginkgo
+- name: github.com/onsi/gomega
+  version: a78ae492d53aad5a7a232d0d0462c14c400e3ee7
