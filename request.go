@@ -82,7 +82,7 @@ func (req *Request) Request() (*http.Request, error) {
 		postData = req.Body
 	} else if req.API == "_bulk" {
 		postData = req.BulkData
-	} else if req.Body != nil {
+	} else if req.Query != nil {
 		b, err := json.Marshal(req.Query)
 		if err != nil {
 			return nil, err
