@@ -286,10 +286,21 @@ func (c *Client) Query(query interface{}, indexList []string, typeList []string,
 	return c.Do(&r)
 }
 
-// Scan starts scroll over an index
+// Scan starts scroll over an index.
+// For ES versions < 5.x, it uses search_type=scan; for 5.x it uses sort=_doc. This means that data
+// will  be returned in the initial response for 5.x versions, but not for older versions. Code
+// wishing to be compatible with both should be written to handle either case.
 func (c *Client) Scan(query interface{}, indexList []string, typeList []string, timeout string, size int) (*Response, error) {
 	v := url.Values{}
-	v.Add("search_type", "scan")
+	version, err := c.Version()
+	if err != nil {
+		return nil, err
+	}
+	if version > "5" {
+		v.Add("sort", "_doc")
+	} else {
+		v.Add("search_type", "scan")
+	}
 	v.Add("scroll", timeout)
 	v.Add("size", strconv.Itoa(size))
 
@@ -307,14 +318,24 @@ func (c *Client) Scan(query interface{}, indexList []string, typeList []string, 
 
 // Scroll fetches data by scroll id
 func (c *Client) Scroll(scrollID string, timeout string) (*Response, error) {
-	v := url.Values{}
-	v.Add("scroll", timeout)
-
 	r := Request{
-		Method:    "POST",
-		API:       "_search/scroll",
-		ExtraArgs: v,
-		Body:      []byte(scrollID),
+		Method: "POST",
+		API:    "_search/scroll",
+	}
+
+	if version, err := c.Version(); err != nil {
+		return nil, err
+	} else if version > "2" {
+		r.Body, err = json.Marshal(map[string]string{"scroll": timeout, "scroll_id": scrollID})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		v := url.Values{}
+		v.Add("scroll", timeout)
+		v.Add("scroll_id", scrollID)
+
+		r.ExtraArgs = v
 	}
 
 	return c.Do(&r)

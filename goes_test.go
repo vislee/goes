@@ -930,7 +930,8 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	c.Assert(err, IsNil)
 
 	var query map[string]interface{}
-	if version, _ := conn.Version(); version > "5" {
+	version, _ := conn.Version()
+	if version > "5" {
 		query = map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -956,12 +957,15 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 		}
 	}
 
-	scan, err := conn.Scan(query, []string{indexName}, []string{docType}, "1m", 1)
+	searchResults, err := conn.Scan(query, []string{indexName}, []string{docType}, "1m", 1)
 	c.Assert(err, IsNil)
-	c.Assert(len(scan.ScrollID) > 0, Equals, true)
+	c.Assert(len(searchResults.ScrollID) > 0, Equals, true)
 
-	searchResults, err := conn.Scroll(scan.ScrollID, "1m")
-	c.Assert(err, IsNil)
+	// Versions < 5.x don't include results in the initial response
+	if version < "5" {
+		searchResults, err = conn.Scroll(searchResults.ScrollID, "1m")
+		c.Assert(err, IsNil)
+	}
 
 	// some data in first chunk
 	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
