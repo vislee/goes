@@ -34,13 +34,35 @@ func (err *SearchError) Error() string {
 // This function is pretty useless for now but might be useful in a near future
 // if wee need more features like connection pooling or load balancing.
 func NewClient(host string, port string) *Client {
-	return &Client{host, port, http.DefaultClient}
+	return &Client{host, port, http.DefaultClient, ""}
 }
 
 // WithHTTPClient sets the http.Client to be used with the connection. Returns the original client.
 func (c *Client) WithHTTPClient(cl *http.Client) *Client {
 	c.Client = cl
 	return c
+}
+
+// Version returns the detected version of the connected ES server
+func (c *Client) Version() (string, error) {
+	// Use cached version if it was already fetched
+	if c.version != "" {
+		return c.version, nil
+	}
+
+	// Get the version if it was not cached
+	r := Request{Method: "GET"}
+	res, err := c.Do(&r)
+	if err != nil {
+		return "", err
+	}
+	if version, ok := res.Raw["version"].(map[string]interface{}); ok {
+		if number, ok := version["number"].(string); ok {
+			c.version = number
+			return number, nil
+		}
+	}
+	return "", errors.New("No version returned by ElasticSearch Server")
 }
 
 // CreateIndex creates a new index represented by a name and a mapping

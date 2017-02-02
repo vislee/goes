@@ -5,7 +5,6 @@
 package goes
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -18,9 +17,8 @@ import (
 )
 
 var (
-	ESHost    = "localhost"
-	ESPort    = "9200"
-	ESVersion = "0.0.0"
+	ESHost = "localhost"
+	ESPort = "9200"
 )
 
 // Hook up gocheck into the gotest runner.
@@ -40,24 +38,11 @@ func (s *GoesTestSuite) SetUpTest(c *C) {
 	if p != "" {
 		ESPort = p
 	}
-	ESVersion = getESVersion(c, ESHost, ESPort)
-}
-
-func getESVersion(c *C, host, port string) string {
-	res, err := http.Get(fmt.Sprintf("http://%s:%s/", host, port))
-	c.Assert(err, Equals, nil)
-	defer res.Body.Close()
-	decoder := json.NewDecoder(res.Body)
-
-	var info map[string]interface{}
-	err = decoder.Decode(&info)
-	c.Assert(err, Equals, nil)
-	return info["version"].(map[string]interface{})["number"].(string)
 }
 
 func (s *GoesTestSuite) TestNewClient(c *C) {
 	conn := NewClient(ESHost, ESPort)
-	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, http.DefaultClient})
+	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, http.DefaultClient, ""})
 }
 
 func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
@@ -70,7 +55,7 @@ func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
 	}
 	conn := NewClient(ESHost, ESPort).WithHTTPClient(cl)
 
-	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, cl})
+	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, cl, ""})
 	c.Assert(conn.Client.Transport.(*http.Transport).DisableCompression, Equals, true)
 	c.Assert(conn.Client.Transport.(*http.Transport).ResponseHeaderTimeout, Equals, 1*time.Second)
 }
@@ -945,7 +930,7 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	c.Assert(err, IsNil)
 
 	var query map[string]interface{}
-	if ESVersion > "5" {
+	if version, _ := conn.Version(); version > "5" {
 		query = map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -1219,7 +1204,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 
 	// Now that we have an ordinary document indexed, try updating it
 	var query map[string]interface{}
-	if ESVersion > "5" {
+	if version, _ := conn.Version(); version > "5" {
 		query = map[string]interface{}{
 			"script": map[string]interface{}{
 				"inline": "ctx._source.counter += params.count",
