@@ -5,6 +5,8 @@
 package goes
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,8 +18,9 @@ import (
 )
 
 var (
-	ESHost = "localhost"
-	ESPort = "9200"
+	ESHost    = "localhost"
+	ESPort    = "9200"
+	ESVersion = "0.0.0"
 )
 
 // Hook up gocheck into the gotest runner.
@@ -37,6 +40,19 @@ func (s *GoesTestSuite) SetUpTest(c *C) {
 	if p != "" {
 		ESPort = p
 	}
+	ESVersion = getESVersion(c, ESHost, ESPort)
+}
+
+func getESVersion(c *C, host, port string) string {
+	res, err := http.Get(fmt.Sprintf("http://%s:%s/", host, port))
+	c.Assert(err, Equals, nil)
+	defer res.Body.Close()
+	decoder := json.NewDecoder(res.Body)
+
+	var info map[string]interface{}
+	err = decoder.Decode(&info)
+	c.Assert(err, Equals, nil)
+	return info["version"].(map[string]interface{})["number"].(string)
 }
 
 func (s *GoesTestSuite) TestNewClient(c *C) {
@@ -928,16 +944,31 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	_, err = conn.RefreshIndex(indexName)
 	c.Assert(err, IsNil)
 
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"filtered": map[string]interface{}{
-				"filter": map[string]interface{}{
-					"term": map[string]interface{}{
-						"user": "foo",
+	var query map[string]interface{}
+	if ESVersion > "5" {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"filter": map[string]interface{}{
+						"term": map[string]interface{}{
+							"user": "foo",
+						},
 					},
 				},
 			},
-		},
+		}
+	} else {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"filtered": map[string]interface{}{
+					"filter": map[string]interface{}{
+						"term": map[string]interface{}{
+							"user": "foo",
+						},
+					},
+				},
+			},
+		}
 	}
 
 	scan, err := conn.Scan(query, []string{indexName}, []string{docType}, "1m", 1)
@@ -1187,20 +1218,39 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	// Now that we have an ordinary document indexed, try updating it
-	query := map[string]interface{}{
-		"script": "ctx._source.counter += count",
-		"lang":   "groovy",
-		"params": map[string]interface{}{
-			"count": 5,
-		},
-		"upsert": map[string]interface{}{
-			"message": "candybar",
-			"user":    "admin",
-			"counter": 1,
-		},
+	var query map[string]interface{}
+	if ESVersion > "5" {
+		query = map[string]interface{}{
+			"script": map[string]interface{}{
+				"inline": "ctx._source.counter += params.count",
+				"lang":   "painless",
+				"params": map[string]interface{}{
+					"count": 5,
+				},
+			},
+			"upsert": map[string]interface{}{
+				"message": "candybar",
+				"user":    "admin",
+				"counter": 1,
+			},
+		}
+	} else {
+		query = map[string]interface{}{
+			"script": "ctx._source.counter += count",
+			"lang":   "groovy",
+			"params": map[string]interface{}{
+				"count": 5,
+			},
+			"upsert": map[string]interface{}{
+				"message": "candybar",
+				"user":    "admin",
+				"counter": 1,
+			},
+		}
 	}
 
 	response, err = conn.Update(d, query, extraArgs)
+	fmt.Println(response)
 	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting") {
 		c.Skip("Scripting is disabled on server, skipping this test")
 		return
