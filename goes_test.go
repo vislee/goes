@@ -1037,6 +1037,16 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 			"index.number_of_shards":   1,
 			"index.number_of_replicas": 0,
 		},
+		"mappings": map[string]interface{}{
+			docType: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"user": map[string]interface{}{
+						"type":  "string",
+						"index": "not_analyzed",
+					},
+				},
+			},
+		},
 	}
 
 	defer conn.DeleteIndex(indexName)
