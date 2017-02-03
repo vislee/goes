@@ -163,6 +163,7 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 	indexName := "testdeleteindexexistingindex"
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	defer conn.DeleteIndex(indexName)
 
 	c.Assert(err, IsNil)
 
@@ -181,8 +182,12 @@ func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
 	conn := NewClient(ESHost, ESPort)
 	indexName := "testupdateindex"
 
+	// Just in case
+	conn.DeleteIndex(indexName)
+
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	_, err = conn.UpdateIndexSettings(indexName, map[string]interface{}{
 		"index": map[string]interface{}{
@@ -201,6 +206,7 @@ func (s *GoesTestSuite) TestRefreshIndex(c *C) {
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	_, err = conn.RefreshIndex(indexName)
 	c.Assert(err, IsNil)
@@ -216,6 +222,7 @@ func (s *GoesTestSuite) TestOptimize(c *C) {
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	// we must wait for a bit otherwise ES crashes
 	time.Sleep(1 * time.Second)
@@ -262,6 +269,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, nil)
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	response, err := conn.BulkSend(tweets)
 	i := Item{
@@ -352,6 +360,7 @@ func (s *GoesTestSuite) TestStats(c *C) {
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	// we must wait for a bit otherwise ES crashes
 	time.Sleep(1 * time.Second)
