@@ -1365,6 +1365,10 @@ func (s *GoesTestSuite) TestDeleteMapping(c *C) {
 	time.Sleep(200 * time.Millisecond)
 
 	response, err = conn.DeleteMapping("tweet", []string{indexName})
+	if version, _ := conn.Version(); version > "2" {
+		c.Assert(err, ErrorMatches, ".*not supported.*")
+		return
+	}
 	c.Assert(err, IsNil)
 
 	c.Assert(response.Acknowledged, Equals, true)

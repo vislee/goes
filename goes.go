@@ -504,6 +504,11 @@ func (c *Client) Update(d Document, query interface{}, extraArgs url.Values) (*R
 
 // DeleteMapping deletes a mapping along with all data in the type
 func (c *Client) DeleteMapping(typeName string, indexes []string) (*Response, error) {
+	if version, err := c.Version(); err != nil {
+		return nil, err
+	} else if version > "2" {
+		return nil, errors.New("Deletion of mappings is not supported in ES 2.x and above.")
+	}
 
 	r := Request{
 		IndexList: indexes,
