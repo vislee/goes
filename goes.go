@@ -119,8 +119,16 @@ func (c *Client) Optimize(indexList []string, extraArgs url.Values) (*Response, 
 		Method:    "POST",
 		API:       "_optimize",
 	}
+	if version, _ := c.Version(); version > "2.1" {
+		r.API = "_forcemerge"
+	}
 
 	return c.Do(&r)
+}
+
+// ForceMerge is the same as Optimize, but matches the naming of the endpoint as of ES 2.1.0
+func (c *Client) ForceMerge(indexList []string, extraArgs url.Values) (*Response, error) {
+	return c.Optimize(indexList, extraArgs)
 }
 
 // Stats fetches statistics (_stats) for the current elasticsearch server
