@@ -457,9 +457,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 		},
 	}
 
-	extraArgs := make(url.Values, 1)
-	extraArgs.Set("ttl", "86400000")
-	response, err := conn.Index(d, extraArgs)
+	response, err := conn.Index(d, nil)
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
@@ -471,6 +469,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	}
 
 	response.Raw = nil
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
