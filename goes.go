@@ -573,14 +573,28 @@ func (c *Client) AliasExists(alias string) (bool, error) {
 	return resp.Status == 200, err
 }
 
+func (c *Client) replaceHost(req *http.Request) {
+	req.URL.Scheme = "http"
+	req.URL.Host = fmt.Sprintf("%s:%s", c.Host, c.Port)
+}
+
+// DoRaw Does the provided requeset and returns the raw bytes and the status code of the response
+func (c *Client) DoRaw(r Requester) ([]byte, uint64, error) {
+	req, err := r.Request()
+	if err != nil {
+		return nil, 0, err
+	}
+	c.replaceHost(req)
+	return c.doRequest(req)
+}
+
 // Do runs the request returned by the requestor and returns the parsed response
 func (c *Client) Do(r Requester) (*Response, error) {
 	req, err := r.Request()
 	if err != nil {
 		return &Response{}, err
 	}
-	req.URL.Scheme = "http"
-	req.URL.Host = fmt.Sprintf("%s:%s", c.Host, c.Port)
+	c.replaceHost(req)
 
 	body, statusCode, err := c.doRequest(req)
 	esResp := &Response{Status: statusCode}
