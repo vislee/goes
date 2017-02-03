@@ -151,9 +151,10 @@ func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
 	conn := NewClient(ESHost, ESPort)
 	resp, err := conn.DeleteIndex("foobar")
 
-	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[foobar] missing]")
+	c.Assert(err.Error(), Matches, "\\[404\\] .*foobar.*")
 	resp.Raw = nil // Don't make us have to duplicate this.
-	c.Assert(resp, DeepEquals, &Response{Status: 404, Error: "IndexMissingException[[foobar] missing]"})
+	c.Assert(resp.Status, Equals, uint64(404))
+	c.Assert(resp.Error, Matches, ".*foobar.*")
 }
 
 func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
