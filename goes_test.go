@@ -541,8 +541,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		Version: 2,
 	}
 	response.Raw = nil
-	response.Shards.Total = 0
-	response.Shards.Successful = 0
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	response, err = conn.Delete(d, url.Values{})
@@ -558,6 +557,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		Version: 3,
 	}
 	response.Raw = nil
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -619,8 +619,7 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 		Version: 0,
 	}
 	response.Raw = nil
-	response.Shards.Total = 0
-	response.Shards.Successful = 0
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	//should be 0 docs after delete by query
