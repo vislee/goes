@@ -817,6 +817,12 @@ func (s *GoesTestSuite) TestCount(c *C) {
 func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	indexName := "testindexstatus"
 	conn := NewClient(ESHost, ESPort)
+
+	// _status endpoint was removed in ES 2.0
+	if version, _ := conn.Version(); version > "2" {
+		return
+	}
+
 	conn.DeleteIndex(indexName)
 
 	mapping := map[string]interface{}{
