@@ -5,7 +5,6 @@
 package goes
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -1280,7 +1279,7 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	}
 
 	response, err = conn.Update(d, query, extraArgs)
-	fmt.Println(response)
+
 	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting") {
 		c.Skip("Scripting is disabled on server, skipping this test")
 		return
