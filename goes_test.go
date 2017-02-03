@@ -567,6 +567,8 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	docID := "1234"
 
 	conn := NewClient(ESHost, ESPort)
+	version, _ := conn.Version()
+
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -606,7 +608,13 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(response.Hits.Total, Equals, uint64(1))
 
-	response, err = conn.Query(query, []string{indexName}, []string{docType}, "DELETE", url.Values{})
+	response, err = conn.DeleteByQuery(query, []string{indexName}, []string{docType}, url.Values{})
+
+	// There's no delete by query in ES 2.x
+	if version > "2" && version < "5" {
+		c.Assert(err, ErrorMatches, ".* does not support delete by query")
+		return
+	}
 
 	c.Assert(err, IsNil)
 
@@ -620,7 +628,11 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	}
 	response.Raw = nil
 	response.Shards = Shard{}
+	response.Took = 0
 	c.Assert(response, DeepEquals, expectedResponse)
+
+	_, err = conn.RefreshIndex(indexName)
+	c.Assert(err, IsNil)
 
 	//should be 0 docs after delete by query
 	response, err = conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
