@@ -391,9 +391,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 		},
 	}
 
-	extraArgs := make(url.Values, 1)
-	extraArgs.Set("ttl", "86400000")
-	response, err := conn.Index(d, extraArgs)
+	response, err := conn.Index(d, nil)
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
@@ -405,6 +403,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	}
 
 	response.Raw = nil
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -428,9 +427,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsNotInMapOrStruct(c *C) {
 		Fields: "test",
 	}
 
-	extraArgs := make(url.Values, 1)
-	extraArgs.Set("ttl", "86400000")
-	_, err = conn.Index(d, extraArgs)
+	_, err = conn.Index(d, nil)
 	c.Assert(err, Not(IsNil))
 }
 
