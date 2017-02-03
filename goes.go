@@ -286,6 +286,34 @@ func (c *Client) Query(query interface{}, indexList []string, typeList []string,
 	return c.Do(&r)
 }
 
+// DeleteByQuery deletes documents matching the specified query. It will return an error for ES 2.x,
+// because delete by query support was removed in those versions.
+func (c *Client) DeleteByQuery(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
+	version, err := c.Version()
+	if err != nil {
+		return nil, err
+	}
+	if version > "2" && version < "5" {
+		return nil, errors.New("ElasticSearch 2.x does not support delete by query")
+	}
+
+	r := Request{
+		Query:     query,
+		IndexList: indexList,
+		TypeList:  typeList,
+		Method:    "DELETE",
+		API:       "_query",
+		ExtraArgs: extraArgs,
+	}
+
+	if version > "5" {
+		r.API = "_delete_by_query"
+		r.Method = "POST"
+	}
+
+	return c.Do(&r)
+}
+
 // Scan starts scroll over an index.
 // For ES versions < 5.x, it uses search_type=scan; for 5.x it uses sort=_doc. This means that data
 // will  be returned in the initial response for 5.x versions, but not for older versions. Code
