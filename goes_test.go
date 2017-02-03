@@ -115,7 +115,7 @@ func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
 	}
 	_, err := conn.Do(&r)
 
-	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[i] missing]")
+	c.Assert(err.Error(), Matches, "\\[40.\\] .*i.*")
 }
 
 func (s *GoesTestSuite) TestCreateIndex(c *C) {
@@ -1473,7 +1473,7 @@ func (s *GoesTestSuite) TestRemoveAlias(c *C) {
 
 	// Get document via alias
 	_, err = conn.Get(aliasName, docType, docID, url.Values{})
-	c.Assert(err.Error(), Equals, "[404] IndexMissingException[["+aliasName+"] missing]")
+	c.Assert(err.Error(), Matches, "\\[404\\] .*"+aliasName+".*")
 }
 
 func (s *GoesTestSuite) TestAliasExists(c *C) {
