@@ -651,6 +651,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	}
 
 	conn := NewClient(ESHost, ESPort)
+	version, _ := conn.Version()
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -683,11 +684,6 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 
-	fields := make(url.Values, 1)
-	fields.Set("fields", "f1")
-	response, err = conn.Get(indexName, docType, docID, fields)
-	c.Assert(err, IsNil)
-
 	expectedResponse = &Response{
 		Status:  200,
 		Index:   indexName,
@@ -699,6 +695,18 @@ func (s *GoesTestSuite) TestGet(c *C) {
 			"f1": []interface{}{"foo"},
 		},
 	}
+
+	fields := make(url.Values, 1)
+	// The fields param is no longer supported in ES 5.x
+	if version < "5" {
+		fields.Set("fields", "f1")
+	} else {
+		expectedResponse.Source = map[string]interface{}{"f1": "foo"}
+		expectedResponse.Fields = nil
+		fields.Set("_source", "f1")
+	}
+	response, err = conn.Get(indexName, docType, docID, fields)
+	c.Assert(err, IsNil)
 
 	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
