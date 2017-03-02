@@ -34,13 +34,35 @@ func (err *SearchError) Error() string {
 // This function is pretty useless for now but might be useful in a near future
 // if wee need more features like connection pooling or load balancing.
 func NewClient(host string, port string) *Client {
-	return &Client{host, port, http.DefaultClient}
+	return &Client{host, port, http.DefaultClient, ""}
 }
 
 // WithHTTPClient sets the http.Client to be used with the connection. Returns the original client.
 func (c *Client) WithHTTPClient(cl *http.Client) *Client {
 	c.Client = cl
 	return c
+}
+
+// Version returns the detected version of the connected ES server
+func (c *Client) Version() (string, error) {
+	// Use cached version if it was already fetched
+	if c.version != "" {
+		return c.version, nil
+	}
+
+	// Get the version if it was not cached
+	r := Request{Method: "GET"}
+	res, err := c.Do(&r)
+	if err != nil {
+		return "", err
+	}
+	if version, ok := res.Raw["version"].(map[string]interface{}); ok {
+		if number, ok := version["number"].(string); ok {
+			c.version = number
+			return number, nil
+		}
+	}
+	return "", errors.New("No version returned by ElasticSearch Server")
 }
 
 // CreateIndex creates a new index represented by a name and a mapping
@@ -97,8 +119,16 @@ func (c *Client) Optimize(indexList []string, extraArgs url.Values) (*Response, 
 		Method:    "POST",
 		API:       "_optimize",
 	}
+	if version, _ := c.Version(); version > "2.1" {
+		r.API = "_forcemerge"
+	}
 
 	return c.Do(&r)
+}
+
+// ForceMerge is the same as Optimize, but matches the naming of the endpoint as of ES 2.1.0
+func (c *Client) ForceMerge(indexList []string, extraArgs url.Values) (*Response, error) {
+	return c.Optimize(indexList, extraArgs)
 }
 
 // Stats fetches statistics (_stats) for the current elasticsearch server
@@ -145,7 +175,7 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 
 	// len(documents) * 2 : action + optional_sources
 	// + 1 : room for the trailing \n
-	bulkData := make([][]byte, len(documents)*2+1)
+	bulkData := make([][]byte, 0, len(documents)*2+1)
 	i := 0
 
 	for _, doc := range documents {
@@ -161,7 +191,7 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 			return &Response{}, err
 		}
 
-		bulkData[i] = action
+		bulkData = append(bulkData, action)
 		i++
 
 		if doc.Fields != nil {
@@ -187,13 +217,13 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 				return &Response{}, err
 			}
 
-			bulkData[i] = sources
+			bulkData = append(bulkData, sources)
 			i++
 		}
 	}
 
 	// forces an extra trailing \n absolutely necessary for elasticsearch
-	bulkData[len(bulkData)-1] = []byte(nil)
+	bulkData = append(bulkData, []byte(nil))
 
 	r := Request{
 		Method:   "POST",
@@ -264,10 +294,49 @@ func (c *Client) Query(query interface{}, indexList []string, typeList []string,
 	return c.Do(&r)
 }
 
-// Scan starts scroll over an index
+// DeleteByQuery deletes documents matching the specified query. It will return an error for ES 2.x,
+// because delete by query support was removed in those versions.
+func (c *Client) DeleteByQuery(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
+	version, err := c.Version()
+	if err != nil {
+		return nil, err
+	}
+	if version > "2" && version < "5" {
+		return nil, errors.New("ElasticSearch 2.x does not support delete by query")
+	}
+
+	r := Request{
+		Query:     query,
+		IndexList: indexList,
+		TypeList:  typeList,
+		Method:    "DELETE",
+		API:       "_query",
+		ExtraArgs: extraArgs,
+	}
+
+	if version > "5" {
+		r.API = "_delete_by_query"
+		r.Method = "POST"
+	}
+
+	return c.Do(&r)
+}
+
+// Scan starts scroll over an index.
+// For ES versions < 5.x, it uses search_type=scan; for 5.x it uses sort=_doc. This means that data
+// will  be returned in the initial response for 5.x versions, but not for older versions. Code
+// wishing to be compatible with both should be written to handle either case.
 func (c *Client) Scan(query interface{}, indexList []string, typeList []string, timeout string, size int) (*Response, error) {
 	v := url.Values{}
-	v.Add("search_type", "scan")
+	version, err := c.Version()
+	if err != nil {
+		return nil, err
+	}
+	if version > "5" {
+		v.Add("sort", "_doc")
+	} else {
+		v.Add("search_type", "scan")
+	}
 	v.Add("scroll", timeout)
 	v.Add("size", strconv.Itoa(size))
 
@@ -285,14 +354,24 @@ func (c *Client) Scan(query interface{}, indexList []string, typeList []string, 
 
 // Scroll fetches data by scroll id
 func (c *Client) Scroll(scrollID string, timeout string) (*Response, error) {
-	v := url.Values{}
-	v.Add("scroll", timeout)
-
 	r := Request{
-		Method:    "POST",
-		API:       "_search/scroll",
-		ExtraArgs: v,
-		Body:      []byte(scrollID),
+		Method: "POST",
+		API:    "_search/scroll",
+	}
+
+	if version, err := c.Version(); err != nil {
+		return nil, err
+	} else if version > "2" {
+		r.Body, err = json.Marshal(map[string]string{"scroll": timeout, "scroll_id": scrollID})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		v := url.Values{}
+		v.Add("scroll", timeout)
+		v.Add("scroll_id", scrollID)
+
+		r.ExtraArgs = v
 	}
 
 	return c.Do(&r)
@@ -433,6 +512,11 @@ func (c *Client) Update(d Document, query interface{}, extraArgs url.Values) (*R
 
 // DeleteMapping deletes a mapping along with all data in the type
 func (c *Client) DeleteMapping(typeName string, indexes []string) (*Response, error) {
+	if version, err := c.Version(); err != nil {
+		return nil, err
+	} else if version > "2" {
+		return nil, errors.New("Deletion of mappings is not supported in ES 2.x and above.")
+	}
 
 	r := Request{
 		IndexList: indexes,
@@ -445,7 +529,7 @@ func (c *Client) DeleteMapping(typeName string, indexes []string) (*Response, er
 
 func (c *Client) modifyAlias(action string, alias string, indexes []string) (*Response, error) {
 	command := map[string]interface{}{
-		"actions": make([]map[string]interface{}, 1),
+		"actions": make([]map[string]interface{}, 0, 1),
 	}
 
 	for _, index := range indexes {
@@ -489,14 +573,28 @@ func (c *Client) AliasExists(alias string) (bool, error) {
 	return resp.Status == 200, err
 }
 
+func (c *Client) replaceHost(req *http.Request) {
+	req.URL.Scheme = "http"
+	req.URL.Host = fmt.Sprintf("%s:%s", c.Host, c.Port)
+}
+
+// DoRaw Does the provided requeset and returns the raw bytes and the status code of the response
+func (c *Client) DoRaw(r Requester) ([]byte, uint64, error) {
+	req, err := r.Request()
+	if err != nil {
+		return nil, 0, err
+	}
+	c.replaceHost(req)
+	return c.doRequest(req)
+}
+
 // Do runs the request returned by the requestor and returns the parsed response
 func (c *Client) Do(r Requester) (*Response, error) {
 	req, err := r.Request()
 	if err != nil {
 		return &Response{}, err
 	}
-	req.URL.Scheme = "http"
-	req.URL.Host = fmt.Sprintf("%s:%s", c.Host, c.Port)
+	c.replaceHost(req)
 
 	body, statusCode, err := c.doRequest(req)
 	esResp := &Response{Status: statusCode}

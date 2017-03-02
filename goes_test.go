@@ -41,7 +41,7 @@ func (s *GoesTestSuite) SetUpTest(c *C) {
 
 func (s *GoesTestSuite) TestNewClient(c *C) {
 	conn := NewClient(ESHost, ESPort)
-	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, http.DefaultClient})
+	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, http.DefaultClient, ""})
 }
 
 func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
@@ -54,7 +54,7 @@ func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
 	}
 	conn := NewClient(ESHost, ESPort).WithHTTPClient(cl)
 
-	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, cl})
+	c.Assert(conn, DeepEquals, &Client{ESHost, ESPort, cl, ""})
 	c.Assert(conn.Client.Transport.(*http.Transport).DisableCompression, Equals, true)
 	c.Assert(conn.Client.Transport.(*http.Transport).ResponseHeaderTimeout, Equals, 1*time.Second)
 }
@@ -114,7 +114,7 @@ func (s *GoesTestSuite) TestRunMissingIndex(c *C) {
 	}
 	_, err := conn.Do(&r)
 
-	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[i] missing]")
+	c.Assert(err.Error(), Matches, "\\[40.\\] .*i.*")
 }
 
 func (s *GoesTestSuite) TestCreateIndex(c *C) {
@@ -150,9 +150,10 @@ func (s *GoesTestSuite) TestDeleteIndexInexistantIndex(c *C) {
 	conn := NewClient(ESHost, ESPort)
 	resp, err := conn.DeleteIndex("foobar")
 
-	c.Assert(err.Error(), Equals, "[404] IndexMissingException[[foobar] missing]")
+	c.Assert(err.Error(), Matches, "\\[404\\] .*foobar.*")
 	resp.Raw = nil // Don't make us have to duplicate this.
-	c.Assert(resp, DeepEquals, &Response{Status: 404, Error: "IndexMissingException[[foobar] missing]"})
+	c.Assert(resp.Status, Equals, uint64(404))
+	c.Assert(resp.Error, Matches, ".*foobar.*")
 }
 
 func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
@@ -161,6 +162,7 @@ func (s *GoesTestSuite) TestDeleteIndexExistingIndex(c *C) {
 	indexName := "testdeleteindexexistingindex"
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
+	defer conn.DeleteIndex(indexName)
 
 	c.Assert(err, IsNil)
 
@@ -179,8 +181,12 @@ func (s *GoesTestSuite) TestUpdateIndexSettings(c *C) {
 	conn := NewClient(ESHost, ESPort)
 	indexName := "testupdateindex"
 
+	// Just in case
+	conn.DeleteIndex(indexName)
+
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	_, err = conn.UpdateIndexSettings(indexName, map[string]interface{}{
 		"index": map[string]interface{}{
@@ -199,6 +205,7 @@ func (s *GoesTestSuite) TestRefreshIndex(c *C) {
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	_, err = conn.RefreshIndex(indexName)
 	c.Assert(err, IsNil)
@@ -214,6 +221,7 @@ func (s *GoesTestSuite) TestOptimize(c *C) {
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	// we must wait for a bit otherwise ES crashes
 	time.Sleep(1 * time.Second)
@@ -260,6 +268,7 @@ func (s *GoesTestSuite) TestBulkSend(c *C) {
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, nil)
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	response, err := conn.BulkSend(tweets)
 	i := Item{
@@ -350,6 +359,7 @@ func (s *GoesTestSuite) TestStats(c *C) {
 	conn.DeleteIndex(indexName)
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
 	c.Assert(err, IsNil)
+	defer conn.DeleteIndex(indexName)
 
 	// we must wait for a bit otherwise ES crashes
 	time.Sleep(1 * time.Second)
@@ -389,9 +399,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 		},
 	}
 
-	extraArgs := make(url.Values, 1)
-	extraArgs.Set("ttl", "86400000")
-	response, err := conn.Index(d, extraArgs)
+	response, err := conn.Index(d, nil)
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
@@ -403,6 +411,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsInStruct(c *C) {
 	}
 
 	response.Raw = nil
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -426,9 +435,7 @@ func (s *GoesTestSuite) TestIndexWithFieldsNotInMapOrStruct(c *C) {
 		Fields: "test",
 	}
 
-	extraArgs := make(url.Values, 1)
-	extraArgs.Set("ttl", "86400000")
-	_, err = conn.Index(d, extraArgs)
+	_, err = conn.Index(d, nil)
 	c.Assert(err, Not(IsNil))
 }
 
@@ -455,9 +462,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 		},
 	}
 
-	extraArgs := make(url.Values, 1)
-	extraArgs.Set("ttl", "86400000")
-	response, err := conn.Index(d, extraArgs)
+	response, err := conn.Index(d, nil)
 	c.Assert(err, IsNil)
 
 	expectedResponse := &Response{
@@ -469,6 +474,7 @@ func (s *GoesTestSuite) TestIndexIdDefined(c *C) {
 	}
 
 	response.Raw = nil
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -540,6 +546,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		Version: 2,
 	}
 	response.Raw = nil
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	response, err = conn.Delete(d, url.Values{})
@@ -555,6 +562,7 @@ func (s *GoesTestSuite) TestDelete(c *C) {
 		Version: 3,
 	}
 	response.Raw = nil
+	response.Shards = Shard{}
 	c.Assert(response, DeepEquals, expectedResponse)
 }
 
@@ -564,6 +572,8 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	docID := "1234"
 
 	conn := NewClient(ESHost, ESPort)
+	version, _ := conn.Version()
+
 	// just in case
 	conn.DeleteIndex(indexName)
 
@@ -603,7 +613,13 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(response.Hits.Total, Equals, uint64(1))
 
-	response, err = conn.Query(query, []string{indexName}, []string{docType}, "DELETE", url.Values{})
+	response, err = conn.DeleteByQuery(query, []string{indexName}, []string{docType}, url.Values{})
+
+	// There's no delete by query in ES 2.x
+	if version > "2" && version < "5" {
+		c.Assert(err, ErrorMatches, ".* does not support delete by query")
+		return
+	}
 
 	c.Assert(err, IsNil)
 
@@ -616,7 +632,12 @@ func (s *GoesTestSuite) TestDeleteByQuery(c *C) {
 		Version: 0,
 	}
 	response.Raw = nil
+	response.Shards = Shard{}
+	response.Took = 0
 	c.Assert(response, DeepEquals, expectedResponse)
+
+	_, err = conn.RefreshIndex(indexName)
+	c.Assert(err, IsNil)
 
 	//should be 0 docs after delete by query
 	response, err = conn.Search(query, []string{indexName}, []string{docType}, url.Values{})
@@ -634,6 +655,7 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	}
 
 	conn := NewClient(ESHost, ESPort)
+	version, _ := conn.Version()
 	conn.DeleteIndex(indexName)
 
 	_, err := conn.CreateIndex(indexName, map[string]interface{}{})
@@ -666,11 +688,6 @@ func (s *GoesTestSuite) TestGet(c *C) {
 	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
 
-	fields := make(url.Values, 1)
-	fields.Set("fields", "f1")
-	response, err = conn.Get(indexName, docType, docID, fields)
-	c.Assert(err, IsNil)
-
 	expectedResponse = &Response{
 		Status:  200,
 		Index:   indexName,
@@ -682,6 +699,18 @@ func (s *GoesTestSuite) TestGet(c *C) {
 			"f1": []interface{}{"foo"},
 		},
 	}
+
+	fields := make(url.Values, 1)
+	// The fields param is no longer supported in ES 5.x
+	if version < "5" {
+		fields.Set("fields", "f1")
+	} else {
+		expectedResponse.Source = map[string]interface{}{"f1": "foo"}
+		expectedResponse.Fields = nil
+		fields.Set("_source", "f1")
+	}
+	response, err = conn.Get(indexName, docType, docID, fields)
+	c.Assert(err, IsNil)
 
 	response.Raw = nil
 	c.Assert(response, DeepEquals, expectedResponse)
@@ -796,6 +825,12 @@ func (s *GoesTestSuite) TestCount(c *C) {
 func (s *GoesTestSuite) TestIndexStatus(c *C) {
 	indexName := "testindexstatus"
 	conn := NewClient(ESHost, ESPort)
+
+	// _status endpoint was removed in ES 2.0
+	if version, _ := conn.Version(); version > "2" {
+		return
+	}
+
 	conn.DeleteIndex(indexName)
 
 	mapping := map[string]interface{}{
@@ -924,24 +959,43 @@ func (s *GoesTestSuite) TestScroll(c *C) {
 	_, err = conn.RefreshIndex(indexName)
 	c.Assert(err, IsNil)
 
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"filtered": map[string]interface{}{
-				"filter": map[string]interface{}{
-					"term": map[string]interface{}{
-						"user": "foo",
+	var query map[string]interface{}
+	version, _ := conn.Version()
+	if version > "5" {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"filter": map[string]interface{}{
+						"term": map[string]interface{}{
+							"user": "foo",
+						},
 					},
 				},
 			},
-		},
+		}
+	} else {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"filtered": map[string]interface{}{
+					"filter": map[string]interface{}{
+						"term": map[string]interface{}{
+							"user": "foo",
+						},
+					},
+				},
+			},
+		}
 	}
 
-	scan, err := conn.Scan(query, []string{indexName}, []string{docType}, "1m", 1)
+	searchResults, err := conn.Scan(query, []string{indexName}, []string{docType}, "1m", 1)
 	c.Assert(err, IsNil)
-	c.Assert(len(scan.ScrollID) > 0, Equals, true)
+	c.Assert(len(searchResults.ScrollID) > 0, Equals, true)
 
-	searchResults, err := conn.Scroll(scan.ScrollID, "1m")
-	c.Assert(err, IsNil)
+	// Versions < 5.x don't include results in the initial response
+	if version < "5" {
+		searchResults, err = conn.Scroll(searchResults.ScrollID, "1m")
+		c.Assert(err, IsNil)
+	}
 
 	// some data in first chunk
 	c.Assert(searchResults.Hits.Total, Equals, uint64(2))
@@ -1012,6 +1066,16 @@ func (s *GoesTestSuite) TestAggregations(c *C) {
 		"settings": map[string]interface{}{
 			"index.number_of_shards":   1,
 			"index.number_of_replicas": 0,
+		},
+		"mappings": map[string]interface{}{
+			docType: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"user": map[string]interface{}{
+						"type":  "string",
+						"index": "not_analyzed",
+					},
+				},
+			},
 		},
 	}
 
@@ -1178,23 +1242,44 @@ func (s *GoesTestSuite) TestUpdate(c *C) {
 	}
 
 	response.Raw = nil
+	response.Shards.Successful = 0
+	response.Shards.Total = 0
 	c.Assert(response, DeepEquals, expectedResponse)
 
 	// Now that we have an ordinary document indexed, try updating it
-	query := map[string]interface{}{
-		"script": "ctx._source.counter += count",
-		"lang":   "groovy",
-		"params": map[string]interface{}{
-			"count": 5,
-		},
-		"upsert": map[string]interface{}{
-			"message": "candybar",
-			"user":    "admin",
-			"counter": 1,
-		},
+	var query map[string]interface{}
+	if version, _ := conn.Version(); version > "5" {
+		query = map[string]interface{}{
+			"script": map[string]interface{}{
+				"inline": "ctx._source.counter += params.count",
+				"lang":   "painless",
+				"params": map[string]interface{}{
+					"count": 5,
+				},
+			},
+			"upsert": map[string]interface{}{
+				"message": "candybar",
+				"user":    "admin",
+				"counter": 1,
+			},
+		}
+	} else {
+		query = map[string]interface{}{
+			"script": "ctx._source.counter += count",
+			"lang":   "groovy",
+			"params": map[string]interface{}{
+				"count": 5,
+			},
+			"upsert": map[string]interface{}{
+				"message": "candybar",
+				"user":    "admin",
+				"counter": 1,
+			},
+		}
 	}
 
 	response, err = conn.Update(d, query, extraArgs)
+
 	if err != nil && strings.Contains(err.(*SearchError).Msg, "dynamic scripting") {
 		c.Skip("Scripting is disabled on server, skipping this test")
 		return
@@ -1298,6 +1383,10 @@ func (s *GoesTestSuite) TestDeleteMapping(c *C) {
 	time.Sleep(200 * time.Millisecond)
 
 	response, err = conn.DeleteMapping("tweet", []string{indexName})
+	if version, _ := conn.Version(); version > "2" {
+		c.Assert(err, ErrorMatches, ".*not supported.*")
+		return
+	}
 	c.Assert(err, IsNil)
 
 	c.Assert(response.Acknowledged, Equals, true)
@@ -1392,7 +1481,7 @@ func (s *GoesTestSuite) TestRemoveAlias(c *C) {
 
 	// Get document via alias
 	_, err = conn.Get(aliasName, docType, docID, url.Values{})
-	c.Assert(err.Error(), Equals, "[404] IndexMissingException[["+aliasName+"] missing]")
+	c.Assert(err.Error(), Matches, "\\[404\\] .*"+aliasName+".*")
 }
 
 func (s *GoesTestSuite) TestAliasExists(c *C) {

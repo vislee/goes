@@ -20,6 +20,9 @@ type Client struct {
 	// Client is the http client used to make requests, allowing settings things
 	// such as timeouts etc
 	Client *http.Client
+
+	// Detected version of ES
+	version string
 }
 
 // Response holds an elasticsearch response

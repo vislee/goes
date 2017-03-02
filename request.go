@@ -82,7 +82,7 @@ func (req *Request) Request() (*http.Request, error) {
 		postData = req.Body
 	} else if req.API == "_bulk" {
 		postData = req.BulkData
-	} else {
+	} else if req.Query != nil {
 		b, err := json.Marshal(req.Query)
 		if err != nil {
 			return nil, err
@@ -90,14 +90,12 @@ func (req *Request) Request() (*http.Request, error) {
 		postData = b
 	}
 
-	reader := ioutil.NopCloser(bytes.NewReader(postData))
-
 	newReq, err := http.NewRequest(req.Method, "", nil)
 	if err != nil {
 		return nil, err
 	}
 	newReq.URL = req.URL()
-	newReq.Body = reader
+	newReq.Body = ioutil.NopCloser(bytes.NewReader(postData))
 	newReq.ContentLength = int64(len(postData))
 
 	if req.Method == "POST" || req.Method == "PUT" {
