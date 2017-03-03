@@ -7,15 +7,13 @@ package goes
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 )
 
 // Client represents a connection to elasticsearch
 type Client struct {
 	// The host to connect to
-	Host string
-
-	// The port to use
-	Port string
+	Host *url.URL
 
 	// Client is the http client used to make requests, allowing settings things
 	// such as timeouts etc
