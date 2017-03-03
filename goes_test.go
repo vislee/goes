@@ -44,6 +44,11 @@ func (s *GoesTestSuite) TestNewClient(c *C) {
 	c.Assert(conn, DeepEquals, &Client{&url.URL{Scheme: "http", Host: ESHost + ":" + ESPort}, http.DefaultClient, ""})
 }
 
+func (s *GoesTestSuite) TestNewClientWithAuth(c *C) {
+	conn := NewClient("foo:bar@"+ESHost, ESPort)
+	c.Assert(conn, DeepEquals, &Client{&url.URL{Scheme: "http", User: url.UserPassword("foo", "bar"), Host: ESHost + ":" + ESPort}, http.DefaultClient, ""})
+}
+
 func (s *GoesTestSuite) TestWithHTTPClient(c *C) {
 	tr := &http.Transport{
 		DisableCompression:    true,

@@ -582,7 +582,7 @@ func (c *Client) AliasExists(alias string) (bool, error) {
 }
 
 func (c *Client) replaceHost(req *http.Request) {
-
+	req.URL.User = c.Host.User
 	req.URL.Scheme = c.Host.Scheme
 	req.URL.Host = c.Host.Host
 }
