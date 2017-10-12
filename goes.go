@@ -250,6 +250,21 @@ func (c *Client) BulkSend(documents []Document) (*Response, error) {
 	return resp, err
 }
 
+func (c *Client) MultiIndex(indexName, docType string, fileds []map[string]interface{}) (*Response, error) {
+	docs := make([]Document, 0, len(fileds))
+	for _, filed := range fileds {
+		doc := Document{
+			ID: nil,
+			Index: indexName,
+			Type:  docType,
+			BulkCommand: BulkCommandIndex,
+			Fields: filed,
+		}
+		docs = append(docs, doc)
+	}
+	return c.BulkSend(docs)
+}
+
 // Search executes a search query against an index
 func (c *Client) Search(query interface{}, indexList []string, typeList []string, extraArgs url.Values) (*Response, error) {
 	r := Request{
